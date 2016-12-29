@@ -76,7 +76,7 @@ void operadorEscena::dibujar(){
         i++;
         progress= i*1.0 / (rayos.size()*1.0);
 
-        if ((progress < 1.0) && (i % 500 == 0)) {
+        if ((progress < 1.0) && (i % (rayos.size()/100.0) == 0)) {
             int barWidth = 70;
 
             std::cout << "[";
