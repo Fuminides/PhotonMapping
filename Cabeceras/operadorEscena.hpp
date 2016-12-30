@@ -62,6 +62,9 @@ private:
      */
     double interseccion(Rayo r, Figura ** choque);
 
+    
+
+
 public:
 
     //Contrastes
@@ -103,6 +106,12 @@ public:
      * Calcula una refraccion especular en el punto desde el punto vista dado, con los dos coeficientes de refraccion de ambos medios.
      */
     Color refraccionEspecular(Figura * figura, Punto origen, Vector vista, double n1, double n2, int);
+
+    /**
+     * Metodo que ejecuta cada thread.
+     */
+    int execute_thread(int, int,  int * , std::list<Rayo> , Color * );
+
 
 };
 

@@ -25,78 +25,56 @@ void operadorEscena::dibujar(){
 
     defecto.set_values(0,0,0, NORMALIZAR_COLORES);
     std::list<Rayo> rayos = camara.trazarRayos();
+    Color * pixels = (Color * ) malloc(sizeof(Color)*rayos.size());
     
-    std::vector<Color> pixels;
-    pixels.reserve(rayos.size());
-    
-    int i = 0;
+    int renderizados;
     float progress = 0.0;
-    unsigned concurentThreadsSupported = std::thread::hardware_concurrency();
+    int concurentThreadsSupported = std::thread::hardware_concurrency();
     if ( concurentThreadsSupported == 0) concurentThreadsSupported = 1;
+    int * i = (int*)calloc(sizeof(int),concurentThreadsSupported);
     cout << "Numero de cores en uso: " << concurentThreadsSupported << "\n";
     int threads_usados = 0;
-    int pixelsPosition[50]; //Si tiene mas de 50 cores no va, pero bueno, si tienes ese equipo no estaras usando este trazador.
 
-    std::vector<std::future<Color>> futures;
+    std::vector<future<int>> futures;
     futures.reserve(concurentThreadsSupported);
-    for ( Rayo rayo : rayos){
-        min = interseccion(rayo, &choque);
 
-        if ( min != -1){
-            if ( !choque->isLuz() ) {
-                Punto puntoRender, origenRayos = camara.getPosicion();
-                Vector direccion = rayo.getVector();
-                puntoRender.set_values(origenRayos.getX() + direccion.getX() * min, origenRayos.getY() + direccion.getY() * min, 
-                    origenRayos.getZ() + direccion.getZ() * min);
-                futures[threads_usados] = (async(&operadorEscena::renderizar, this, puntoRender, choque, NUMERO_REBOTES, camara.getPosicion(), REFRACCION_MEDIO, true, PATH_LEN));
-                pixelsPosition[threads_usados] = i; //Nos guardamos el numero de pixel del n thread.
-                threads_usados = (threads_usados + 1)%concurentThreadsSupported; 
+    for(int z = 0; z < concurentThreadsSupported; z++){
+        futures.push_back(async(std::launch::async, &operadorEscena::execute_thread, this, z, concurentThreadsSupported, &(i[0]), rayos, pixels));
+    }
 
-                if (threads_usados == 0) //Hemos agotado los cores
-                {
-                    for (int cuenta = 0; cuenta < concurentThreadsSupported; ++cuenta)
-                    {
-                        pixels[pixelsPosition[cuenta]] = futures[cuenta].get();
-                    }
-                   
-                }
-
-                min = -1;
-            }
-            else{
-                Color colorAux = choque->getColor();
-                pixels[i] = (colorAux);
-                min = -1;
-            }
-        }
-        else{
-                pixels[i] = (defecto);
+    renderizados = 0;
+    for(int count = 0; count < concurentThreadsSupported; count++){
+        renderizados += i[count];
+    }
+    while( renderizados < rayos.size() ){
+        std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+        renderizados = 0;
+        for(int count = 0; count < concurentThreadsSupported; count++){
+            renderizados += i[count];
         }
 
-        i++;
-        progress= i*1.0 / (rayos.size()*1.0);
+        int copia = renderizados;
+        progress= copia*1.0 / (rayos.size()*1.0);
 
-        if ((progress < 1.0) && (i % ((int) rayos.size()/100.0) == 0)) {
-            int barWidth = 70;
+        int barWidth = 70;
 
-            std::cout << "[";
-            int pos = barWidth * progress;
-            for (int i = 0; i < barWidth; ++i) {
-                if (i < pos) std::cout << "=";
-                else if (i == pos) std::cout << ">";
-                else std::cout << " ";
-            }
-            std::cout << "] " << int(progress * 100.0) << " " <<  std::to_string(i) << "/" << rayos.size() << " \r";
-            std::cout.flush();
+        std::cout << "[";
+        int pos = barWidth * progress;
+        for (int copia = 0; copia < barWidth; ++copia) {
+            if (copia < pos) std::cout << "=";
+            else if (copia == pos) std::cout << ">";
+            else std::cout << " ";
         }
-        //std::cout << std::endl;
+        std::cout << "] " << int(progress * 100.0) << " " <<  std::to_string(copia) << "/" << rayos.size() << " \r";
+        std::cout.flush();
     }
             
     for (int cuenta = 0; cuenta < concurentThreadsSupported; ++cuenta)
     {
-        if ( !pixels[pixelsPosition[cuenta]].iniciado() ) pixels[pixelsPosition[cuenta]] = futures[cuenta].get();
+        futures[cuenta].wait();
     }
-                   
+          
+    std::cout << std::endl;         
 
     double areaPixel = (camara.getResX() * camara.getResY()) *1.0/ (rayos.size()*1.0);
     int fila = camara.getResX() / sqrt(areaPixel),
@@ -109,13 +87,13 @@ void operadorEscena::dibujar(){
 
     if ( NORMALIZAR_COLORES ){
         double max = 0;
-        for ( Color color : pixels){
-            if ( color.max() > max) max = color.max();
+        for ( int aux = 0; aux < rayos.size(); aux++){
+            if ( pixels[aux].max() > max) max = pixels[aux].max();
         }
         if ( max > 255){
-            for ( Color color : pixels){
-                color.multiplicar(1.0/max);
-                color.multiplicar(255);
+            for ( int aux = 0; aux < rayos.size(); aux++){
+                pixels[aux].multiplicar(1.0/max);
+                pixels[aux].multiplicar(255);
             }    
         }
     }
@@ -125,7 +103,7 @@ void operadorEscena::dibujar(){
         myfile << pixels[i].splashG();
         myfile << pixels[i].splashB();
     }
-
+    free(pixels);
     myfile.close();
 }
 
@@ -505,4 +483,45 @@ double operadorEscena::interseccion(Rayo r, Figura ** choque){
     }
 
     return min;
+}
+
+int operadorEscena::execute_thread(int id, int intervalo,  int * cuenta, list<Rayo> rayos, Color * pixels){
+    Figura *choque;
+    Color defecto;
+    defecto.set_values(0,0,0, NORMALIZAR_COLORES);
+    int i = id, z = 0;
+
+    for (Rayo rayo: rayos){
+       if (z==i){
+            double min = interseccion(rayo, &choque);
+
+            if ( min != -1){
+                if ( !choque->isLuz() ) {
+                    Punto puntoRender, origenRayos = camara.getPosicion();
+                    Vector direccion = rayo.getVector();
+                    puntoRender.set_values(origenRayos.getX() + direccion.getX() * min, origenRayos.getY() + direccion.getY() * min, 
+                        origenRayos.getZ() + direccion.getZ() * min);
+                     Color colorGen = renderizar(puntoRender, choque, NUMERO_REBOTES, camara.getPosicion(), REFRACCION_MEDIO, true, PATH_LEN);
+                    pixels[z] = colorGen;
+
+                }
+                else{
+                    Color colorAux = choque->getColor();
+                    pixels[z] = (colorAux);
+                }
+            }
+            else{
+                    pixels[z] = (defecto);
+            }
+            cuenta[id] ++;
+            i += intervalo;
+            z++;
+        }
+        else{
+            z++;
+        }
+    }
+
+    return 1;
+
 }
