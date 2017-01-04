@@ -74,6 +74,11 @@ public:
 	 * Añade una luz a la figura y la convierte en una luz de area.
 	 */
 	virtual void setLuz(Luz) = 0;
+
+	/*
+	 * Devuelve una lista de rayos con los que generar fotones para mapeo de fotones.
+	 */
+	virtual std::vector<Rayo> muestrearFotones(int) = 0;
 };
 
 #endif

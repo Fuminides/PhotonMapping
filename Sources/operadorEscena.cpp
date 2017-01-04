@@ -98,12 +98,13 @@ void operadorEscena::dibujar(){
         }
     }
 
-    for ( int i = 0; i <rayos.size(); ++i){
-        myfile << pixels[i].splashR();
-        myfile << pixels[i].splashG();
-        myfile << pixels[i].splashB();
+    for ( int j = 0; j <rayos.size(); j = j+1){
+        myfile << pixels[j].splashR() << pixels[j].splashG() << pixels[j].splashB();
     }
+    
     free(pixels);
+    free(i);
+
     myfile.close();
 }
 
@@ -132,6 +133,7 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
         double dLuz = dirLuz.modulo();
         dirLuz.normalizar();
         puntoDirLuz.set_values(p, dirLuz);
+        Figura * choque;
 
         min = -1;
 
@@ -141,7 +143,6 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
             if ( distancia >= 0 ){
                 if ((!figuras[i]->isLuz()) && (distancia < dLuz)){ //Las luces de area no intersectan
                     min = distancia;
-                    break;
                 }
             }
         }
@@ -207,109 +208,137 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
     min = -1;
 
     if ( indirecto ){ //Si hay que calcular luz indirecta
-        Figura * choque;
-        Punto auxP;
-        auxP.set_values(0,0,0);
-        Montecarlo montecarlo;
-
-        if ( PATH_TRACING && (seguirCamino < PATH_LEN) ) montecarlo.set_values(restaPuntos(p,auxP), figura->normal(p), 1); //Si estamos en un camino de path tracing, solo queremos un rayo.
-        else montecarlo.set_values(restaPuntos(p,auxP), figura->normal(p), NUMERO_RAYOS_INDIRECTA); //Si estamos en la primera iteracion de path tracing o no esta activado, lanzamos todos.
-        
-        list<Vector> vecIndir = montecarlo.calcularw();
-        double exitos = 0.0;
-        if (!PATH_TRACING){ //Si no usamos path tracing, generamos y lanzamos los rayos y ya esta.
-            Color cIndir;
-            cIndir.set_values(0,0,0, NORMALIZAR_COLORES);
-            double rojo = 0.0, verde = 0.0, azul = 0.0;
-            montecarlo.set_values(restaPuntos(p,auxP), figura->normal(p), 1);
-
-            //Igual que para el reflejo y refraccion
-            //Hacemos la media de todos los puntos renderizados con montecarlo
-            for ( Vector vec : vecIndir){
-                Rayo rayo;
-                rayo.set_values(p, vec);
-                min = interseccion(rayo, &choque);
-
-                if ( min != -1){
-                    Punto puntoRender, origenRayos = camara.getPosicion();
-                    Vector direccion = rayo.getVector();
-                    puntoRender.set_values(origenRayos.getX() + direccion.getX() * min, origenRayos.getY() + direccion.getY() * min, 
-                        origenRayos.getZ() + direccion.getZ() * min);
-
-                    Color cIndir = renderizar(puntoRender, choque, NUMERO_REBOTES, camara.getPosicion(), refraccionMedio, false, 0);
-                    
-                    if (cIndir.max() > 0.0) {
-                        Color auxC = figura->getColor(); 
-                        auxC.multiplicar(AMBIENTE/M_PI); //Mismo termino difuso para ambas BRDF.
-
-                        exitos += 1.0;
-                        Vector vAux = restaPuntos(puntoRender,p);
-                        vAux.normalizar();
-
-
-                        if ( figura->getBRDF() == 0){
-                            bdrf = phong(figura, p, vAux,restaPuntos(origenVista,p));   
-                        } 
-                        else if (figura->getBRDF() == 1){
-                            bdrf = ward(restaPuntos(origenVista,p), vAux, figura->normal(p), p);
-                        }
-                        
-                        cIndir.multiplicar(bdrf);
-                        //cIndir.sumar(auxC);
-
-                        //Vamos acumulando los valores para hacer la media
-                        rojo += cIndir.splashR();
-                        verde += cIndir.splashG();
-                        azul += cIndir.splashB();
-
-                        min = -1;
-                    }
-                }
-            }
-
-            rojo = rojo / (vecIndir.size()*1.0);
-            verde = verde / (vecIndir.size()*1.0);
-            azul = azul/ (vecIndir.size()*1.0);
-
-            cIndir.set_values(rojo, verde, azul, NORMALIZAR_COLORES);
-            inicial.sumar(cIndir);
+        if (PHOTON_MAPPING){
+            //Buscar los k mas proximos y dividir por el area
         }
         else{
-            if ( seguirCamino == 0) { return inicial; }//Si hemos llegado al final del camino, devolvemos la directa.
+            Figura * choque;
+            Punto auxP;
+            auxP.set_values(0,0,0);
+            Montecarlo montecarlo;
 
-            //Igual que si no hubiese path tracing (salvando ligeros cambios)
-            Color cIndir;
-            cIndir.set_values(0,0,0, NORMALIZAR_COLORES);
-            double rojo = 0, verde = 0, azul = 0;
-            double exitos = 1.0;
-            montecarlo.set_values(restaPuntos(p,auxP), figura->normal(p), 1);
+            if ( PATH_TRACING && (seguirCamino < PATH_LEN) ) montecarlo.set_values(restaPuntos(p,auxP), figura->normal(p), 1); //Si estamos en un camino de path tracing, solo queremos un rayo.
+            else montecarlo.set_values(restaPuntos(p,auxP), figura->normal(p), NUMERO_RAYOS_INDIRECTA); //Si estamos en la primera iteracion de path tracing o no esta activado, lanzamos todos.
+            
+            list<Vector> vecIndir = montecarlo.calcularw();
+            double exitos = 0.0;
+            if (!PATH_TRACING){ //Si no usamos path tracing, generamos y lanzamos los rayos y ya esta.
+                Color cIndir;
+                cIndir.set_values(0,0,0, NORMALIZAR_COLORES);
+                double rojo = 0.0, verde = 0.0, azul = 0.0;
+                montecarlo.set_values(restaPuntos(p,auxP), figura->normal(p), 1);
 
-            for (Vector vec : vecIndir){
-                Figura * figuraAux;
-                Rayo rayo;
-                rayo.set_values(p, vec);
-                min = interseccion(rayo, &figuraAux);
-                int i;
+                //Igual que para el reflejo y refraccion
+                //Hacemos la media de todos los puntos renderizados con montecarlo
+                for ( Vector vec : vecIndir){
+                    Rayo rayo;
+                    rayo.set_values(p, vec);
+                    min = interseccion(rayo, &choque);
 
-                //Si no choca con nada, podemos intentar hacia otro lado
-                for ( i = 0; (min == -1) && i <2; i++){
-                    Vector vect = montecarlo.calcularw().front();
-                    rayo.set_values(p, vect);
-                    min = interseccion(rayo, &figuraAux);
+                    if ( min != -1){
+                        Punto puntoRender, origenRayos = camara.getPosicion();
+                        Vector direccion = rayo.getVector();
+                        puntoRender.set_values(origenRayos.getX() + direccion.getX() * min, origenRayos.getY() + direccion.getY() * min, 
+                            origenRayos.getZ() + direccion.getZ() * min);
+
+                        Color cIndir = renderizar(puntoRender, choque, NUMERO_REBOTES, camara.getPosicion(), refraccionMedio, false, 0);
+                        
+                        if (cIndir.max() > 0.0) {
+                            Color auxC = figura->getColor(); 
+                            auxC.multiplicar(AMBIENTE/M_PI); //Mismo termino difuso para ambas BRDF.
+
+                            exitos += 1.0;
+                            Vector vAux = restaPuntos(puntoRender,p);
+                            vAux.normalizar();
+
+
+                            if ( figura->getBRDF() == 0){
+                                bdrf = phong(figura, p, vAux,restaPuntos(origenVista,p));   
+                            } 
+                            else if (figura->getBRDF() == 1){
+                                bdrf = ward(restaPuntos(origenVista,p), vAux, figura->normal(p), p);
+                            }
+                            
+                            cIndir.multiplicar(bdrf);
+                            //cIndir.sumar(auxC);
+
+                            //Vamos acumulando los valores para hacer la media
+                            rojo += cIndir.splashR();
+                            verde += cIndir.splashG();
+                            azul += cIndir.splashB();
+
+                            min = -1;
+                        }
+                    }
                 }
 
-                if ( min != -1){
-                    Punto puntoRender, origenRayos = p;
-                    Vector direccion = rayo.getVector();
+                rojo = rojo / (vecIndir.size()*1.0);
+                verde = verde / (vecIndir.size()*1.0);
+                azul = azul/ (vecIndir.size()*1.0);
 
-                    puntoRender.set_values(origenRayos.getX() + direccion.getX() * min, origenRayos.getY() + direccion.getY() * min, 
-                        origenRayos.getZ() + direccion.getZ() * min);
-                    Color colorAux;
+                cIndir.set_values(rojo, verde, azul, NORMALIZAR_COLORES);
+                inicial.sumar(cIndir);
+            }
+            else{
+                if ( seguirCamino == 0) { return inicial; }//Si hemos llegado al final del camino, devolvemos la directa.
 
-                    if ( !figuraAux->isLuz() ){
-                        colorAux = renderizar(puntoRender, figuraAux, NUMERO_REBOTES, camara.getPosicion(), refraccionMedio, true, seguirCamino - 1);
+                //Igual que si no hubiese path tracing (salvando ligeros cambios)
+                Color cIndir;
+                cIndir.set_values(0,0,0, NORMALIZAR_COLORES);
+                double rojo = 0, verde = 0, azul = 0;
+                double exitos = 1.0;
+                montecarlo.set_values(restaPuntos(p,auxP), figura->normal(p), 1);
 
-                        if ( colorAux.max() > 0.0) {
+                for (Vector vec : vecIndir){
+                    Figura * figuraAux;
+                    Rayo rayo;
+                    rayo.set_values(p, vec);
+                    min = interseccion(rayo, &figuraAux);
+                    int i;
+
+                    //Si no choca con nada, podemos intentar hacia otro lado
+                    for ( i = 0; (min == -1) && i <2; i++){
+                        Vector vect = montecarlo.calcularw().front();
+                        rayo.set_values(p, vect);
+                        min = interseccion(rayo, &figuraAux);
+                    }
+
+                    if ( min != -1){
+                        Punto puntoRender, origenRayos = p;
+                        Vector direccion = rayo.getVector();
+
+                        puntoRender.set_values(origenRayos.getX() + direccion.getX() * min, origenRayos.getY() + direccion.getY() * min, 
+                            origenRayos.getZ() + direccion.getZ() * min);
+                        Color colorAux;
+
+                        if ( !figuraAux->isLuz() ){
+                            colorAux = renderizar(puntoRender, figuraAux, NUMERO_REBOTES, camara.getPosicion(), refraccionMedio, true, seguirCamino - 1);
+
+                            if ( colorAux.max() > 0.0) {
+                                exitos += 1.0;
+
+                                Vector vAux = restaPuntos(puntoRender,p);
+                                double distance = vAux.modulo();
+                                vAux.normalizar();
+
+                                if ( figura->getBRDF() == 0){
+                                    bdrf = phong(figura, p, vAux,restaPuntos(origenVista,p));   
+                                } 
+                                else if (figura->getBRDF() == 1){
+                                    bdrf = ward(restaPuntos(origenVista,p), vAux, figura->normal(p), p);
+                                }
+                                
+                                colorAux.multiplicar(bdrf);
+
+                                rojo += colorAux.splashR();
+                                verde += colorAux.splashG();
+                                azul += colorAux.splashB();
+                            }
+                        }
+                        else {
+                            Luz lAux = figuraAux->getLuces()[0];
+                            lAux.atenuar(min);
+                            colorAux = lAux.getColor(); 
                             exitos += 1.0;
 
                             Vector vAux = restaPuntos(puntoRender,p);
@@ -328,40 +357,17 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
                             rojo += colorAux.splashR();
                             verde += colorAux.splashG();
                             azul += colorAux.splashB();
-                        }
+                            }
                     }
-                    else {
-                        Luz lAux = figuraAux->getLuces()[0];
-                        lAux.atenuar(min);
-                        colorAux = lAux.getColor(); 
-                        exitos += 1.0;
-
-                        Vector vAux = restaPuntos(puntoRender,p);
-                        double distance = vAux.modulo();
-                        vAux.normalizar();
-
-                        if ( figura->getBRDF() == 0){
-                            bdrf = phong(figura, p, vAux,restaPuntos(origenVista,p));   
-                        } 
-                        else if (figura->getBRDF() == 1){
-                            bdrf = ward(restaPuntos(origenVista,p), vAux, figura->normal(p), p);
-                        }
-                        
-                        colorAux.multiplicar(bdrf);
-
-                        rojo += colorAux.splashR();
-                        verde += colorAux.splashG();
-                        azul += colorAux.splashB();
-                        }
                 }
+
+                if ( seguirCamino == PATH_LEN)  rojo = rojo / NUMERO_RAYOS_INDIRECTA;
+                if ( seguirCamino == PATH_LEN)  verde = verde / NUMERO_RAYOS_INDIRECTA;
+                if ( seguirCamino == PATH_LEN)  azul = azul / NUMERO_RAYOS_INDIRECTA;
+
+                cIndir.set_values(rojo, verde, azul, NORMALIZAR_COLORES);
+                inicial.sumar(cIndir);
             }
-
-            if ( seguirCamino == PATH_LEN)  rojo = rojo / NUMERO_RAYOS_INDIRECTA;
-            if ( seguirCamino == PATH_LEN)  verde = verde / NUMERO_RAYOS_INDIRECTA;
-            if ( seguirCamino == PATH_LEN)  azul = azul / NUMERO_RAYOS_INDIRECTA;
-
-            cIndir.set_values(rojo, verde, azul, NORMALIZAR_COLORES);
-            inicial.sumar(cIndir);
         }
     }
 
@@ -492,7 +498,7 @@ int operadorEscena::execute_thread(int id, int intervalo,  int * cuenta, list<Ra
     int i = id, z = 0;
 
     for (Rayo rayo: rayos){
-       if (z==i){
+        if (z==i){
             double min = interseccion(rayo, &choque);
 
             if ( min != -1){
@@ -513,15 +519,110 @@ int operadorEscena::execute_thread(int id, int intervalo,  int * cuenta, list<Ra
             else{
                     pixels[z] = (defecto);
             }
+
             cuenta[id] ++;
             i += intervalo;
-            z++;
         }
-        else{
-            z++;
-        }
+
+        z++;
     }
 
     return 1;
 
 }
+
+void operadorEscena::trazar_fotones(){
+    //Primero sampleamos las luces puntuales
+    for(Luz luz:luces){
+        if (!luz.getArea()){
+            std::vector<Rayo> rayosLuz = luz.muestrearFotones(10);
+            for(Rayo rayo : rayosLuz){
+                trazarCaminoFoton(rayo, luz, PATH_LEN);
+            }
+        }
+    } 
+    //Luego, las luces de area
+    for(Figura * figura: figuras){
+
+    }
+}
+
+void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad){
+    Figura * choque;
+    Montecarlo montecarlo;
+
+    double min = interseccion(r, &choque);
+    if(min > -1){
+        if( profundidad != PATH_LEN){
+            //Guardamos
+
+        }
+        //Seguimos el camino
+        if( profundidad > 0){
+            //Ruleta Rusa
+            Vector azar;
+            int umbral = 7, difuso = (int) (10*choque->getCoefRefraccion())/2;
+            std::random_device rd;
+            std::mt19937 mt(rd());
+            std::uniform_real_distribution<double> dist(0.0, 1.0);
+            int suerte = (int) (dist(mt)*10);
+
+            if ( suerte < (umbral - difuso)){ //Rebote
+                Vector azar;
+                Punto pInterseccion;
+                Punto origen = r.getOrigen(), aux;
+                aux.set_values(0,0,0);
+                Vector direccion = r.getVector();
+
+                pInterseccion.set_values(origen.getX() + direccion.getX()*min,origen.getY()+direccion.getY()*min,origen.getZ()+direccion.getZ()*min);
+
+                do{
+                    direccion.set_values(dist(mt), dist(mt),dist(mt)); //Creamos un vector que este en la direccion que queremos.
+                } while (productoEscalar(direccion, choque->normal(pInterseccion)) <= 0);
+
+                direccion.normalizar();
+
+                r.set_values(pInterseccion, direccion);
+                l.setOrigen(r.getOrigen());
+                l.setColor(choque->getColor());
+                //l.atenuar(min); //?? No se si ponerlo o no
+
+                trazarCaminoFoton(r,l,profundidad-1);
+            }
+            else if ( suerte < umbral){ //Difuso
+                Vector normal = choque->normal(r.getOrigen()), refraccion;
+                Vector vista = r.getVector();
+                vista.normalizar();
+                normal.normalizar();
+                double n1 = REFRACCION_MEDIO, n2 = choque->getRefraccion();
+                Vector direccion = r.getVector();
+
+                if ( productoEscalar(vista, normal) < 0 ){
+                  normal = valorPorVector(normal, -1); //Si no es la normal que queremos, la cambiamos de sentido.  
+                  double dAux = n1;
+                  n1=n2;
+                  n2=dAux;
+                } 
+                
+                //Aplicamos la ley de snell
+                double cosenoAngulo1 = (productoEscalar(vista, normal) / (normal.modulo() * vista.modulo()));
+                double senoCAngulo2 = pow(n1/n2,2) * (1 - pow(cosenoAngulo1,2));
+                Rayo rebote;
+                Punto render;
+
+                render.set_values(r.getOrigen().getX() + direccion.getX()*min,r.getOrigen().getY()+direccion.getY()*min,r.getOrigen().getZ()+direccion.getZ()*min);
+                refraccion = sumaVectores(valorPorVector(vista, n1/n2), valorPorVector(normal, (n1/n2 * cosenoAngulo1 - sqrt(1-senoCAngulo2))));
+                refraccion.normalizar();
+
+                rebote.set_values(render, refraccion);
+
+                l.setOrigen(r.getOrigen());
+                l.setColor(choque->getColor());
+                //l.atenuar(min); //?? No se si ponerlo o no
+                trazarCaminoFoton(rebote, l, profundidad-1);
+            }
+            //Si no, el rayico a casa que hace frio
+        }
+    }
+}
+

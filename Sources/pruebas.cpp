@@ -103,7 +103,7 @@ int main(int argc, char ** argv){
         origenLuz3.set_values(100, -50, 0);
         luz3.set_values(origenLuz3, blanco, 80);
 
-        camara.set_values(origenCamara, vc1, vc2, vc3, 10* 100, 10 * 100,  pow(150,2) );
+        camara.set_values(origenCamara, vc1, vc2, vc3, 10* 100, 10 * 100,  pow(400,2) );
 
         
         escena.anyadirFigura(&esfera2);

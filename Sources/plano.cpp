@@ -59,19 +59,56 @@ void Plano::setLuz(Luz _l){
 	luz = true;
 
 	luces[0].set_values(origen, cLuz, intensidad);
+	luces[0].esArea();
 	aux = sumaPuntoVector(origen, valorPorVector(vectorX, anchura));
 	luces[1].set_values(aux, cLuz, intensidad);
+	luces[1].esArea();
 	aux = sumaPuntoVector(aux, valorPorVector(vectorY, altura));
 	luces[2].set_values(aux, cLuz, intensidad);
+	luces[2].esArea();
 	aux = sumaPuntoVector(origen, valorPorVector(vectorY, altura));
 	luces[3].set_values(aux, cLuz, intensidad);
+	luces[3].esArea();
 	aux = sumaPuntoVector(origen, valorPorVector(vectorY, altura/2));
 	aux = sumaPuntoVector(aux, valorPorVector(vectorX, anchura/2));
 	luces[4].set_values(aux, cLuz, intensidad);
-
+	luces[4].esArea();
 }
 
 std::vector<Luz> Plano::getLuces(){
 	std::vector<Luz> v(std::begin(luces), std::end(luces));    
     return v;
+}
+
+std::vector<Rayo> Plano::muestrearFotones(int n){
+	std::vector<Rayo> rayos;
+	Punto p;
+	Punto auxP;
+	Rayo r;
+	auxP.set_values(0,0,0);
+	std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_real_distribution<double> dist(0.0, 1.0);
+
+	for (int i = 0; i < n; ++i)
+	{
+		Punto sample;
+		double height = dist(mt)*altura, weidght = dist(mt)*anchura;
+		Vector aux1 = valorPorVector(vectorY, height), aux2 = valorPorVector(vectorX, weidght);
+
+		sample = sumaPuntoVector(origen,aux1);
+		sample = sumaPuntoVector(sample, aux2); //Punto al azar del plano
+
+		Vector dir;
+		do{
+			dir.set_values(dist(mt), dist(mt),dist(mt)); //Creamos un vector que este enla direccion que queremos.
+		} while (productoEscalar(dir, vNormal) <= 0);
+
+		dir.normalizar();
+		r.set_values(sample, dir);
+
+		rayos.push_back(r);
+	}
+
+	return rayos;
 }

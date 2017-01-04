@@ -22,6 +22,7 @@
 #include <fstream>
 #include <cmath> 
 #include <future>
+#include <random>
 
 class operadorEscena
 {
@@ -62,8 +63,7 @@ private:
      */
     double interseccion(Rayo r, Figura ** choque);
 
-    
-
+    void trazarCaminoFoton(Rayo r, Luz l, int profundidad);
 
 public:
 
@@ -71,6 +71,7 @@ public:
     const bool NORMALIZAR_COLORES = false; //Solo funciona bien en alguna escena muy concreta con muchos fogonazos
     int NUMERO_RAYOS_INDIRECTA = 1024;
     bool PATH_TRACING = false;
+    bool PHOTON_MAPPING = true;
 
     /**
      * Incluye una camara nueva en la escena
@@ -111,6 +112,11 @@ public:
      * Metodo que ejecuta cada thread.
      */
     int execute_thread(int, int,  int * , std::list<Rayo> , Color * );
+
+    /**
+     * Lanza los fotones en la escena y los guarda en un mapa.
+     */
+    void trazar_fotones();
 
 
 };

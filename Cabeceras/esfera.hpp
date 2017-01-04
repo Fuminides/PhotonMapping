@@ -14,6 +14,9 @@
 #include "figura.hpp"
 #include "operadorVector.hpp"
 
+#include <vector>
+
+
  class Esfera : public Figura{
 
         double radio;
@@ -73,6 +76,9 @@
           * Añade una luz para conseguir una luz de area.
           */
          void setLuz(Luz);
+
+         //TODO
+         std::vector<Rayo> muestrearFotones(int n){;}
 
  };
 

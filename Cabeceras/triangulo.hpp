@@ -12,6 +12,7 @@
 #include "plano.hpp"
 
 #include <string>
+#include <vector>
 
 #define EPSILON 0.01
 
@@ -53,6 +54,7 @@ class Triangulo : public Figura {
 		//----Luces de area----
 		std::vector<Luz> getLuces();
 		void setLuz(Luz);
+		std::vector<Rayo> muestrearFotones(int n){;}
 };
 
 #endif

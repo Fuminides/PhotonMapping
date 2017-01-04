@@ -14,6 +14,9 @@
 #include "operadorVector.hpp"
 
 #include <math.h>
+#include <vector>
+#include <random>
+
 
 class Plano : public Figura
 {
@@ -46,6 +49,7 @@ public:
 	//----Luces de Area---
 	void setLuz(Luz);
 	std::vector<Luz> getLuces();
+	std::vector<Rayo> muestrearFotones(int);
 
 };
 

@@ -24,7 +24,7 @@ class Color {
 	public:
 
 		Color(){
-			;
+			; //Es necesario, aunque no haga nada.
 		}
 		/*
 		 * Especifica el RGB del color, y si se utiliza o no el modo contraste.
