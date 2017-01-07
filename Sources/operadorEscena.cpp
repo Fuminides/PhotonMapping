@@ -109,7 +109,7 @@ void operadorEscena::dibujar(){
         buffer[contador+1] = pixels[j].splashG();
         buffer[contador+2] =  pixels[j].splashB();
         contador+=3;
-        if ( contador == 6066 ){
+        if ( contador == 18198 ){
             fwrite(buffer, sizeof(unsigned char), contador, fp);
             contador = 0;
         }

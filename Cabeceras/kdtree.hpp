@@ -401,18 +401,19 @@ std::vector<Foton> knearest(kdtree& arbol, Punto p,int k){
 	double dMin=sqrt(pow((actual.getX()-p.getX()),2.0) + pow((actual.getY()-p.getY()),2.0) + pow((actual.getZ()-p.getZ()),2.0));
 	while(num < k && tamanyo(arbol)>=k){
 		//Iniciamos recorrido del arbol 
-		nearestRec(arbol.nodo,p,dMin,min);
 		num++;
-		listado.push_back(min);
-		borrar(arbol,min);
+		listado.push_back(nearestRec(arbol.nodo,p,dMin,min));
+		//borrar(arbol,min);
 	}
+
+  return listado;
 }
 
 
 /*
  * Asigna en min el foton mas proximo a un punto.
  */
-void nearestRec(typename kdtree::NodoBinario*& nodo, Punto p,double& dMin,Foton& min){
+Foton nearestRec(typename kdtree::NodoBinario*& nodo, Punto p,double& dMin,Foton min){
 	if(nodo != nullptr){
 		Foton actual=nodo->dato;
 		Punto act = min.getPosicion();
@@ -426,6 +427,8 @@ void nearestRec(typename kdtree::NodoBinario*& nodo, Punto p,double& dMin,Foton&
 			nearestRec(nodo->izq,p,dMin,min);
 		}
 	}
+
+  return min;
 	
 }
 
