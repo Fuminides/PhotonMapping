@@ -112,3 +112,9 @@ std::vector<Rayo> Plano::muestrearFotones(int n){
 
 	return rayos;
 }
+
+bool Plano::derecha(Punto p){
+	Vector pToPlano;
+	pToPlano = restaPuntos(p, origen);
+	return (productoEscalar(vNormal, pToPlano) > 0);
+}

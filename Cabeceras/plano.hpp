@@ -44,6 +44,11 @@ public:
      */
 	Vector normal(Punto);
 
+	/*
+	 * Devuelve true si solo si el punto cae a la derecha del plano.
+	 */
+	bool derecha(Punto);
+
 	bool isBox() { return false; }
 	
 	//----Luces de Area---

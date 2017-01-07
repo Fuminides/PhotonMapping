@@ -97,15 +97,32 @@ void operadorEscena::dibujar(){
             }    
         }
     }
+    myfile.close();
 
+    unsigned char buffer[18198]; //El tamano del buffer ha sido escogido experimentando con tiempos de ejecucion
+    FILE *fp;
+    fp=fopen("example.ppm", "a");
+
+    int contador = 0;
     for ( int j = 0; j <rayos.size(); j = j+1){
-        myfile << pixels[j].splashR() << pixels[j].splashG() << pixels[j].splashB();
+        buffer[contador] =  pixels[j].splashR();
+        buffer[contador+1] = pixels[j].splashG();
+        buffer[contador+2] =  pixels[j].splashB();
+        contador+=3;
+        if ( contador == 6066 ){
+            fwrite(buffer, sizeof(unsigned char), contador, fp);
+            contador = 0;
+        }
     }
+    if ( contador > 0){
+        fwrite(buffer, sizeof(unsigned char), contador, fp);
+    }
+
     
     free(pixels);
     free(i);
 
-    myfile.close();
+    fclose(fp);
 }
 
 void operadorEscena::setCamara(Camara c){
