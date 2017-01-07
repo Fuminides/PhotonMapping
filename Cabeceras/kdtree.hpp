@@ -14,7 +14,8 @@
 #include "punto.hpp"
 #include "plano.hpp"
 #include <vector>
-//#include "pila.hpp"
+#include <math.h>
+#include <vector>
 using namespace std;
 
 
@@ -47,16 +48,15 @@ struct kdtree{
 	 * en caso contrario devuelve falso
 	 */
 	friend bool esVacia(const kdtree& arbol);
+	/* 
+	 * Si en 'arbol' hay un foton igual a 'e', borra ese foton y devuelve 
+     * true. En caso de que no hay ningun foton igual a 'e' devuelve false
+	 */
+	friend bool borrar(kdtree& arbol, Foton e);
 	/*
 	 * Devuelve los k fotones mas proximos dado un punto.
 	 */
-	friend std::vector<Foton> knearest(const kdtree& arbol, Punto p);
-	
-	/** DE MOMENTO NO HACEN FALTA
-	friend void iniciarIterador(kdtree<Foton> &a);
-    friend bool existeSiguiente(kdtree<Foton> &a);
-    friend Foton siguiente(kdtree<Foton> &a, bool &error);
-	**/
+	friend std::vector<Foton> knearest(kdtree& arbol, Punto p,int k);
    
  private:
 	struct NodoBinario {
@@ -68,7 +68,6 @@ struct kdtree{
 
 	NodoBinario* nodo; //Raíz
     int tamanyo;//Número de elementos
-    //Pila<NodoBinario*> iter; //Iterador/Pila
 	
 	/* 
 	 * Ha insertado recursivamente el elemento 'e' a partir de 'nodo', que se 
@@ -93,9 +92,40 @@ struct kdtree{
      * de no encontrarlo, y por lo tanto no haberlo podido, ha puesto error a true
 	 */
 	friend Foton obtenerRec(typename kdtree::NodoBinario* nodo, Foton e, bool &error);
-	
-	
+	/* 
+	 * Ha modificado el valor 'max' con el valor de 'dato' y posteriormente a 
+	 * invocado a buscado en el subárbol izquierdo en el caso de que nivel&2 no 
+	 * coincida con dimension en subárbol izquierdo y en el subárbol derecho un
+	 * elemento mayor que este con respecto a la dimension 'dimension'. Se tiene 
+	 * en cuenta esto, porque si la dimensión coincide con nivel%2, el elemento
+	 * máximo para esa dimensión dada ha de estar en el subárbol derecho
+	 */
 
+	friend void max(typename kdtree::NodoBinario* nodo, Foton &max, int nivel, int dimension);
+	/* 
+	 * Primero comprueba si nodo es distinto de nullptr, ya que si es igual 
+	 * significa que hemos llegado al fin de la búsqueda
+	 * En caso de que no sea igual, mira si 'dato' es mayor o igual para la 
+	 * dimensión 'dimensión' de 'dato', modificando en este caso su valor.
+	 * Posteriormente ha seguido buscando un elemento mayor realizando una llamada
+	 * recursiva, mirando primero si nivel%2 coincide con dimension para no tener 
+	 * que buscar en el subárbol izquierdo o sí debido a la estructura del kdtree
+	 * y luego ha realizado una llamada recursiva para buscar en subárbol derecho
+	 */
+	friend void maxRec(typename kdtree::NodoBinario* nodo, Foton &max, int nivel, int dim);
+	/*
+	 * Asigna en min el foton mas proximo a un punto.
+	 */
+	friend void nearestRec(typename kdtree::NodoBinario*& nodo,Punto p,double& dMin,Foton& min);
+	/* 
+	 * Ha borrado el foton 'e', en caso de encontrarlo búscandolo a partir del 
+     * nodo 'nodo' que se encuentra en el nivel 'nivel, modificando 'tamanyo' y 
+	 * poniendo borrado a true. En caso de no haberlo encontrado a puesto borrado
+     * a false 
+	 */
+	friend void borrarRec(typename kdtree::NodoBinario*& nodo, Foton e, int nivel, int& tamanyo, bool &borrado);
+
+	
 };
 
 /* Crea un kdtree 'arbol' poniendo la raíz(nodo) a nulo y el tamaño 
@@ -266,61 +296,138 @@ int tamanyo(const kdtree& arbol){
   return arbol.tamanyo;
 }
 
+/** A PARTIR DE AQUI SE HAN CREADO TODAS LAS FUNCIONES PARA DEVOLVER LOS K MAS CERCANOS**/
+
+/* 
+ * Ha modificado el valor 'max' con el valor de 'dato' y posteriormente a 
+ * invocado a buscado en el subárbol izquierdo en el caso de que nivel&2 no 
+ * coincida con dimension en subárbol izquierdo y en el subárbol derecho un
+ * elemento mayor que este con respecto a la dimension 'dimension'. Se tiene 
+ * en cuenta esto, porque si la dimensión coincide con nivel%2, el elemento
+ * máximo para esa dimensión dada ha de estar en el subárbol derecho
+ */
+
+void max(typename kdtree::NodoBinario* nodo, Foton &max, int nivel, int dimension) {
+  max=nodo->dato;
+  if(nivel%2!=dimension) {
+    maxRec(nodo->izq,max, nivel+1,dimension);
+  }
+  maxRec(nodo->dcho,max,nivel+1,dimension);
+}
+
+/* 
+ * Primero comprueba si nodo es distinto de nullptr, ya que si es igual 
+ * significa que hemos llegado al fin de la búsqueda
+ * En caso de que no sea igual, mira si 'dato' es mayor o igual para la 
+ * dimensión 'dimensión' de 'dato', modificando en este caso su valor.
+ * Posteriormente ha seguido buscando un elemento mayor realizando una llamada
+ * recursiva, mirando primero si nivel%2 coincide con dimension para no tener 
+ * que buscar en el subárbol izquierdo o sí debido a la estructura del kdtree
+ * y luego ha realizado una llamada recursiva para buscar en subárbol derecho
+ */
+
+void maxRec(typename kdtree::NodoBinario* nodo, Foton &max, int nivel, int dim) {
+  if(nodo!=nullptr) {
+	if(!nodo->plano.derecha(max.getPosicion())){
+      //Así obtenemos el max que esté más abajo
+      max=nodo->dato;
+    }
+    
+    if(nivel&2!=dim){
+      maxRec(nodo->izq,max,nivel+1,dim);
+    }
+    maxRec(nodo->dcho,max,nivel+1,dim);
+  }
+}
+
+/* 
+ * Si en 'arbol' hay un foton igual a 'e', borra ese foton y devuelve 
+ * true. En caso de que no hay ningun foton igual a 'e' devuelve false
+ */
+bool borrar(kdtree& arbol, Foton e){
+	bool borrado=false;
+	borrarRec(arbol.nodo,e,0,arbol.tamanyo,borrado);
+	return borrado;
+}
+
+/* 
+ * Ha borrado el foton 'e', en caso de encontrarlo búscandolo a partir del 
+ * nodo 'nodo' que se encuentra en el nivel 'nivel, modificando 'tamanyo' y 
+ * poniendo borrado a true. En caso de no haberlo encontrado a puesto borrado
+ * a false 
+ */
+void borrarRec(typename kdtree::NodoBinario*& nodo, Foton e, int nivel, int& tamanyo, bool &borrado){
+	if(nodo!=nullptr) {
+		if(comparar(e, nodo->dato)==1) {
+			if(nodo->izq==nullptr && nodo->dcho==nullptr) {
+				delete nodo;
+				nodo=nullptr;
+				tamanyo--;
+				borrado=true;
+			}
+			else if(nodo->izq!=nullptr) {
+				max(nodo->izq,nodo->dato,nivel+1,nivel%2);
+				//Intercambio de elementos de nodos
+				borrarRec(nodo->izq,nodo->dato,nivel+1,tamanyo,borrado);
+			}
+
+		  else {
+			//nodo->izq==nullptr && nodo->dcho!=nullptr
+			max(nodo->dcho,nodo->dato,nivel+1,nivel%2);
+			//Intercambio de subárboles
+			nodo->izq=nodo->dcho;
+			nodo->dcho=nullptr;
+			borrarRec(nodo->izq,nodo->dato,nivel+1,tamanyo,borrado);
+		  }
+		}
+		else {
+			if(nodo->plano.derecha(e.getPosicion())) {
+				borrarRec(nodo->dcho,e,nivel+1,tamanyo,borrado);
+			}
+			else {
+				borrarRec(nodo->izq,e,nivel+1,tamanyo,borrado);
+			}
+		}
+	}
+}
 /*
  * Devuelve los k fotones mas proximos dado un punto.
  */
-std::vector<Foton> knearest(const kdtree& arbol, Punto p);
-
-/** TODO ESTO QUE VIENE A CONTINUACION LO COMENTO PORQUE SI NO HACE FALTA DE MOMENTO NO HE PROBADO SU FUNCIONAMIENTO **/
-/**
-/* Se crea un elemento de tipo Pila que será el que gestionará el listado
-   de los elementos, primero establece la raiz del árbol en 'nodo' y
-   posteriormente va apilando los elementos en la pila hasta que un árbol deja
-   de tener elementos en su subarbol izquierdo 
-void iniciarIterador(kdtree<Foton> &a) {
-  //crea pila vacía de punteros a nodos del árbol
-	crear<typename kdtree<Foton>::NodoBinario*>(a.iter);
-  //raíz del árbol en aux
-	typename kdtree<Foton>::NodoBinario* aux=a.nodo; 
-
-	while(aux!=nullptr) {
-    //apila el puntero aux (a un nodo del árbol) en la pila del iterador
-		apilar(a.iter,aux);  
-		aux=aux->izq;
+std::vector<Foton> knearest(kdtree& arbol, Punto p,int k){
+	vector<Foton> listado;
+	int num=0;
+	Foton min=(arbol.nodo)->dato;
+	Punto actual = min.getPosicion();
+	double dMin=sqrt(pow((actual.getX()-p.getX()),2.0) + pow((actual.getY()-p.getY()),2.0) + pow((actual.getZ()-p.getZ()),2.0));
+	while(num < k && tamanyo(arbol)>=k){
+		//Iniciamos recorrido del arbol 
+		nearestRec(arbol.nodo,p,dMin,min);
+		num++;
+		listado.push_back(min);
+		borrar(arbol,min);
 	}
-
-
-/* Comprueba si está vacia la pila del iterador y devuelve true en el caso de
-   que esté vacía y false en el caso de que esté vacia. 
-bool existeSiguiente(kdtree<Foton> &a) {
-  //hay siguiente si la pila del iterador es no vacía 
-	return !(esVacia<typename kdtree<Foton>::NodoBinario*>(a.iter)); 
 }
 
-/* Recorre elemento a elemento, comprueba primero si existe elemento siguiente,
-   si existe, primero almacena la cima y la desapila, posteriormente volverá a
-   apilar los elementos desapilados y devolverá el dato 'unDato' que previamente
-   hemos almacenado. 
-Foton siguiente(kdtree<Foton> &a, bool &error) {
-	typename kdtree<Foton>::NodoBinario* aux;
-	Foton unDato;
-	if(existeSiguiente(a)) {
-		error=false;
-		aux=cima<typename kdtree<Foton>::NodoBinario*>(a.iter); 
-		desapilar<typename kdtree<Foton>::NodoBinario*>(a.iter); 
-    //Siguiente elemento visitado
-		unDato=aux->dato; 
-		aux=aux->dcho;
-		while(aux!=nullptr) {
-			apilar<typename kdtree<Foton>::NodoBinario*>(a.iter,aux);
-			aux=aux->izq;
+
+/*
+ * Asigna en min el foton mas proximo a un punto.
+ */
+void nearestRec(typename kdtree::NodoBinario*& nodo, Punto p,double& dMin,Foton& min){
+	if(nodo != nullptr){
+		Foton actual=nodo->dato;
+		Punto act = min.getPosicion();
+		double d=sqrt(pow((act.getX()-p.getX()),2.0) + pow((act.getY()-p.getY()),2.0) + pow((act.getZ()-p.getZ()),2.0));
+		if(d<dMin){
+			nearestRec(nodo->dcho,p,d,actual);
+			nearestRec(nodo->izq,p,d,actual);
+		}
+		else{
+			nearestRec(nodo->dcho,p,dMin,min);
+			nearestRec(nodo->izq,p,dMin,min);
 		}
 	}
-	else {
-		error=true;
-	}
-	return unDato;
-}**/
+	
+}
 
 #endif
 
