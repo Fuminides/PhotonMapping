@@ -3,7 +3,7 @@
 
 #include "vector.hpp"
 #include "color.hpp"
-#include "Punto.hpp"
+#include "punto.hpp"
 
 class Foton{
 

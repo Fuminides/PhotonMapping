@@ -79,7 +79,7 @@ void insertarRec(typename kdtree<Foton>::NodoBinario*& nodo, Foton e, int nivel)
    de no encontrarlo, y por lo tanto no haberlo podido, ha puesto error a true*/
  Foton obtenerRec(typename kdtree<Foton>::NodoBinario* nodo, Foton e, bool &error);
 
- /* compara dos Fotones y devuelve 0 si e < e2 , 1 si e = e2 y 2 si e > e2 */
+/* compara dos Fotones y devuelve 1 si e = e2 y 0 en caso contrario */ 
  int comparar(Foton e,Foton e2);
 
 struct kdtree {
@@ -240,14 +240,13 @@ Foton obtenerRec(typename kdtree<Foton>::NodoBinario* nodo, Foton e, bool &error
   }
 }
 
-/* compara dos Fotones y devuelve 0 si e < e2 , 1 si e = e2 y 2 si e > e2 */ 
-int comparar(Foton e, Foton e2){
+/* compara dos Fotones y devuelve 1 si e = e2 y 0 en caso contrario */ 
+int comparar(elem e, elem e2){
 	if(e.getPosicion().equals(e2.getPosicion())){
 		return 1;
 	}
-	//Como se si un punto es > o < a otro ?? /***/
-	else if (e.getPosicion().getX()<e2.getPosicion().getX() ){
-		
+	else {
+		return 0;
 	}
 }
 
