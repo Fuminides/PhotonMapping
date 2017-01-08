@@ -52,7 +52,8 @@ struct kdtree{
 	 * Si en 'arbol' hay un foton igual a 'e', borra ese foton y devuelve 
      * true. En caso de que no hay ningun foton igual a 'e' devuelve false
 	 */
-	friend bool borrar(kdtree& arbol, Foton e);
+	/*friend bool borrar(kdtree& arbol, Foton e);*/
+	
 	/*
 	 * Devuelve los k fotones mas proximos dado un punto.
 	 */
@@ -101,7 +102,7 @@ struct kdtree{
 	 * máximo para esa dimensión dada ha de estar en el subárbol derecho
 	 */
 
-	friend void max(typename kdtree::NodoBinario* nodo, Foton &max, int nivel, int dimension);
+	/*friend void max(typename kdtree::NodoBinario* nodo, Foton &max, int nivel, int dimension);*/
 	/* 
 	 * Primero comprueba si nodo es distinto de nullptr, ya que si es igual 
 	 * significa que hemos llegado al fin de la búsqueda
@@ -112,18 +113,23 @@ struct kdtree{
 	 * que buscar en el subárbol izquierdo o sí debido a la estructura del kdtree
 	 * y luego ha realizado una llamada recursiva para buscar en subárbol derecho
 	 */
-	friend void maxRec(typename kdtree::NodoBinario* nodo, Foton &max, int nivel, int dim);
+	/*friend void maxRec(typename kdtree::NodoBinario* nodo, Foton &max, int nivel, int dim);*/
+	/*
+	 * Devuelve true si el foton e se encuentra en el array anyadidos , false
+	 * en caso contrario
+	 */
+	friend bool estaArray (int num,Foton e,Foton anyadidos[]);
 	/*
 	 * Asigna en min el foton mas proximo a un punto.
 	 */
-	friend Foton nearestRec(typename kdtree::NodoBinario*& nodo,Punto p,double& dMin,Foton& min);
+	friend void nearestRec(typename kdtree::NodoBinario*& nodo,Punto p,double& dMin,Foton& min,int num,Foton anyadidos[]);
 	/* 
 	 * Ha borrado el foton 'e', en caso de encontrarlo búscandolo a partir del 
      * nodo 'nodo' que se encuentra en el nivel 'nivel, modificando 'tamanyo' y 
 	 * poniendo borrado a true. En caso de no haberlo encontrado a puesto borrado
      * a false 
 	 */
-	friend void borrarRec(typename kdtree::NodoBinario*& nodo, Foton e, int nivel, int& tamanyo, bool &borrado);
+	/*friend void borrarRec(typename kdtree::NodoBinario*& nodo, Foton e, int nivel, int& tamanyo, bool &borrado);*/
 
 	
 };
@@ -307,13 +313,13 @@ int tamanyo(const kdtree& arbol){
  * máximo para esa dimensión dada ha de estar en el subárbol derecho
  */
 
-void max(typename kdtree::NodoBinario* nodo, Foton &max, int nivel, int dimension) {
+/*void max(typename kdtree::NodoBinario* nodo, Foton &max, int nivel, int dimension) {
   max=nodo->dato;
   if(nivel%2!=dimension) {
     maxRec(nodo->izq,max, nivel+1,dimension);
   }
   maxRec(nodo->dcho,max,nivel+1,dimension);
-}
+}*/
 
 /* 
  * Primero comprueba si nodo es distinto de nullptr, ya que si es igual 
@@ -326,7 +332,7 @@ void max(typename kdtree::NodoBinario* nodo, Foton &max, int nivel, int dimensio
  * y luego ha realizado una llamada recursiva para buscar en subárbol derecho
  */
 
-void maxRec(typename kdtree::NodoBinario* nodo, Foton &max, int nivel, int dim) {
+/*void maxRec(typename kdtree::NodoBinario* nodo, Foton &max, int nivel, int dim) {
   if(nodo!=nullptr) {
 	if(!nodo->plano.derecha(max.getPosicion())){
       //Así obtenemos el max que esté más abajo
@@ -338,17 +344,17 @@ void maxRec(typename kdtree::NodoBinario* nodo, Foton &max, int nivel, int dim) 
     }
     maxRec(nodo->dcho,max,nivel+1,dim);
   }
-}
+}*/
 
 /* 
  * Si en 'arbol' hay un foton igual a 'e', borra ese foton y devuelve 
  * true. En caso de que no hay ningun foton igual a 'e' devuelve false
  */
-bool borrar(kdtree& arbol, Foton e){
+/*bool borrar(kdtree& arbol, Foton e){
 	bool borrado=false;
 	borrarRec(arbol.nodo,e,0,arbol.tamanyo,borrado);
 	return borrado;
-}
+}*/
 
 /* 
  * Ha borrado el foton 'e', en caso de encontrarlo búscandolo a partir del 
@@ -356,7 +362,7 @@ bool borrar(kdtree& arbol, Foton e){
  * poniendo borrado a true. En caso de no haberlo encontrado a puesto borrado
  * a false 
  */
-void borrarRec(typename kdtree::NodoBinario*& nodo, Foton e, int nivel, int& tamanyo, bool &borrado){
+/*void borrarRec(typename kdtree::NodoBinario*& nodo, Foton e, int nivel, int& tamanyo, bool &borrado){
 	if(nodo!=nullptr) {
 		if(comparar(e, nodo->dato)==1) {
 			if(nodo->izq==nullptr && nodo->dcho==nullptr) {
@@ -389,47 +395,61 @@ void borrarRec(typename kdtree::NodoBinario*& nodo, Foton e, int nivel, int& tam
 			}
 		}
 	}
-}
+}*/
 /*
  * Devuelve los k fotones mas proximos dado un punto.
  */
 std::vector<Foton> knearest(kdtree& arbol, Punto p,int k){
 	vector<Foton> listado;
+	Foton anyadidos[k];
 	int num=0;
 	Foton min=(arbol.nodo)->dato;
 	Punto actual = min.getPosicion();
 	double dMin=sqrt(pow((actual.getX()-p.getX()),2.0) + pow((actual.getY()-p.getY()),2.0) + pow((actual.getZ()-p.getZ()),2.0));
 	while(num < k && tamanyo(arbol)>=k){
 		//Iniciamos recorrido del arbol 
+		nearestRec(arbol.nodo,p,dMin,min,num,anyadidos);
+		listado.push_back(min);
+		//Añadimos el nuevo a la lista de añadidos
+		anyadidos[num]= min;
 		num++;
-		listado.push_back(nearestRec(arbol.nodo,p,dMin,min));
-		//borrar(arbol,min);
 	}
 
   return listado;
 }
-
-
+/*
+ * Devuelve true si el foton e se encuentra en el array anyadidos , false
+ * en caso contrario
+ */
+bool estaArray (int num,Foton e,Foton anyadidos[]){
+	for(int i=0;i<num;i++){
+		if(comparar(anyadidos[i],e)==1){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
+}
 /*
  * Asigna en min el foton mas proximo a un punto.
  */
-Foton nearestRec(typename kdtree::NodoBinario*& nodo, Punto p,double& dMin,Foton min){
+void nearestRec(typename kdtree::NodoBinario*& nodo, Punto p,double& dMin,Foton& min,int num,Foton anyadidos[]){
 	if(nodo != nullptr){
 		Foton actual=nodo->dato;
 		Punto act = min.getPosicion();
 		double d=sqrt(pow((act.getX()-p.getX()),2.0) + pow((act.getY()-p.getY()),2.0) + pow((act.getZ()-p.getZ()),2.0));
 		if(d<dMin){
-			nearestRec(nodo->dcho,p,d,actual);
-			nearestRec(nodo->izq,p,d,actual);
+			if(!estaArray(num,actual,anyadidos)){
+				nearestRec(nodo->dcho,p,d,actual,num,anyadidos);
+				nearestRec(nodo->izq,p,d,actual,num,anyadidos);
+			}	
 		}
 		else{
-			nearestRec(nodo->dcho,p,dMin,min);
-			nearestRec(nodo->izq,p,dMin,min);
+			nearestRec(nodo->dcho,p,dMin,min,num,anyadidos);
+			nearestRec(nodo->izq,p,dMin,min,num,anyadidos);
 		}
-	}
-
-  return min;
-	
+	}	
 }
 
 #endif
