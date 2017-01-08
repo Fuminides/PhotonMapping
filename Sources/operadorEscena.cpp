@@ -22,6 +22,11 @@ void operadorEscena::dibujar(){
     Color defecto;
     int distancia, min = -1, filas = 0;
     Figura * choque;
+    crear(fotonMap);
+    crear(fotonMapCaustics);
+    if ( PHOTON_MAPPING ){
+        trazar_fotones();
+    } 
 
     defecto.set_values(0,0,0, NORMALIZAR_COLORES);
     std::list<Rayo> rayos = camara.trazarRayos();
@@ -227,6 +232,37 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
     if ( indirecto ){ //Si hay que calcular luz indirecta
         if (PHOTON_MAPPING){
             //Buscar los k mas proximos y dividir por el area
+            std::vector<Foton> fotones = knearest(fotonMap, p, 50), causticFoton = knearest(fotonMapCaustics, p ,50);
+            double radio = lejano(fotones, p), radioCausticas = lejano(causticFoton, p);
+            double R = 0.0, G = 0.0, B = 0.0;
+            Color cIndir, cAux;
+
+            for(Foton fotonAux:fotones){
+                Color cAux = fotonAux.getColor();
+                R+= cAux.splashR();
+                G+= cAux.splashG();
+                B+= cAux.splashB();
+            }
+            R = R / (M_PI*radio*radio);
+            G = G / (M_PI*radio*radio);
+            B = B / (M_PI*radio*radio);
+            cIndir.set_values(R,G,B, NORMALIZAR_COLORES);
+
+            R = 0.0; G = 0.0; B = 0.0;
+            for(Foton fotonAux:fotonMapCaustics){
+                Color cAux = fotonAux.getColor();
+                R+= cAux.splashR();
+                G+= cAux.splashG();
+                B+= cAux.splashB();
+            }
+            R = R / (M_PI*radioCausticas*radioCausticas);
+            G = G / (M_PI*radioCausticas*radioCausticas);
+            B = B / (M_PI*radioCausticas*radioCausticas);
+            cAux.set_values(R,G,B, NORMALIZAR_COLORES);
+            cIndir.sumar(cAux);
+            
+            inicial.sumar(cIndir);
+
         }
         else{
             Figura * choque;
@@ -314,7 +350,7 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
                     int i;
 
                     //Si no choca con nada, podemos intentar hacia otro lado
-                    for ( i = 0; (min == -1) && i <2; i++){
+                    for ( i = 0; (min == -1) && (i <2); i++){
                         Vector vect = montecarlo.calcularw().front();
                         rayo.set_values(p, vect);
                         min = interseccion(rayo, &figuraAux);
@@ -549,30 +585,54 @@ int operadorEscena::execute_thread(int id, int intervalo,  int * cuenta, list<Ra
 }
 
 void operadorEscena::trazar_fotones(){
-    //Primero sampleamos las luces puntuales
-    for(Luz luz:luces){
-        if (!luz.getArea()){
-            std::vector<Rayo> rayosLuz = luz.muestrearFotones(10);
-            for(Rayo rayo : rayosLuz){
-                trazarCaminoFoton(rayo, luz, PATH_LEN);
+    int numLuces = luces.size(), restantes = FOTONES, restantesCausticas = FOTONES;
+
+    while ((restantes > 0) | (restantesCausticas > 0)){
+        double fotonesPorLuz = (restantes+restantesCausticas)*1.0/(numLuces*1.0);
+        //Primero sampleamos las luces puntuales
+        for(Luz luz:luces){
+            if (!luz.getArea()){
+                std::vector<Rayo> rayosLuz = luz.muestrearFotones(fotonesPorLuz);
+                for(Rayo rayo : rayosLuz){
+                    trazarCaminoFoton(rayo, luz, PATH_LEN, &restantes, &restantesCausticas, false);
+                }
+            }
+        } 
+        //Luego, las luces de area
+        for(Figura * figura: figuras){
+            if (figura->isLuz()){
+                std::vector<Rayo> rayosLuz = figura->muestrearFotones(fotonesPorLuz);
+                for(Rayo rayo : rayosLuz){
+                    Luz luz = figura->getLuces().at(0);
+                    luz.setOrigen(rayo.getOrigen());
+                    trazarCaminoFoton(rayo, luz, PATH_LEN, &restantes, &restantesCausticas, false);
+                }
             }
         }
-    } 
-    //Luego, las luces de area
-    for(Figura * figura: figuras){
-
     }
 }
 
-void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad){
+void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad, int * normales, int * causticas, bool caustica){
     Figura * choque;
     Montecarlo montecarlo;
-
+    Punto pInterseccion;
+    Punto origen = r.getOrigen();
     double min = interseccion(r, &choque);
     if(min > -1){
         if( profundidad != PATH_LEN){
             //Guardamos
-
+            Foton foton;
+            Vector direccion = r.getVector();
+            pInterseccion.set_values(origen.getX() + direccion.getX()*min,origen.getY()+direccion.getY()*min,origen.getZ()+direccion.getZ()*min);
+            foton.set_values(direccion, l.getColor(), pInterseccion);
+            if ( caustica ){
+                anyadir(&fotonMapCaustics,foton);
+                *causticas+=1;
+            }
+            else{
+                anyadir(&fotonMap, foton);
+                *normales+=1;
+            }
         }
         //Seguimos el camino
         if( profundidad > 0){
@@ -586,8 +646,7 @@ void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad){
 
             if ( suerte < (umbral - difuso)){ //Rebote
                 Vector azar;
-                Punto pInterseccion;
-                Punto origen = r.getOrigen(), aux;
+                Punto aux;
                 aux.set_values(0,0,0);
                 Vector direccion = r.getVector();
 
@@ -599,20 +658,25 @@ void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad){
 
                 direccion.normalizar();
 
-                r.set_values(pInterseccion, direccion);
                 l.setOrigen(r.getOrigen());
-                l.setColor(choque->getColor());
+                Color cAux = choque->getColor();
+                if (choque->getBRDF() == 0 )  cAux.multiplicar(phong(choque, pInterseccion, valorPorVector(r.getVector(),-1), direccion));
+                else if (choque->getBRDF() == 1 ) cAux.multiplicar(ward(direccion, valorPorVector(r.getVector(),-1), choque->normal(pInterseccion),pInterseccion));
+
+                l.setColor(cAux);
+                r.set_values(pInterseccion, direccion);
                 //l.atenuar(min); //?? No se si ponerlo o no
 
-                trazarCaminoFoton(r,l,profundidad-1);
+                trazarCaminoFoton(r,l,profundidad-1, normales, causticas, false);
             }
             else if ( suerte < umbral){ //Difuso
-                Vector normal = choque->normal(r.getOrigen()), refraccion;
+                Vector direccion = r.getVector();
+                pInterseccion.set_values(origen.getX() + direccion.getX()*min,origen.getY()+direccion.getY()*min,origen.getZ()+direccion.getZ()*min);
+                Vector normal = choque->normal(pInterseccion), refraccion;
                 Vector vista = r.getVector();
                 vista.normalizar();
                 normal.normalizar();
                 double n1 = REFRACCION_MEDIO, n2 = choque->getRefraccion();
-                Vector direccion = r.getVector();
 
                 if ( productoEscalar(vista, normal) < 0 ){
                   normal = valorPorVector(normal, -1); //Si no es la normal que queremos, la cambiamos de sentido.  
@@ -632,11 +696,14 @@ void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad){
                 refraccion.normalizar();
 
                 rebote.set_values(render, refraccion);
+                Color cAux = choque->getColor();
+                if (choque->getBRDF() == 0 )  cAux.multiplicar(phong(choque, pInterseccion, valorPorVector(r.getVector(),-1), refraccion));
+                else if (choque->getBRDF() == 1 ) cAux.multiplicar(ward(refraccion, valorPorVector(r.getVector(),-1),normal,pInterseccion));
 
                 l.setOrigen(r.getOrigen());
-                l.setColor(choque->getColor());
+                l.setColor(cAux);
                 //l.atenuar(min); //?? No se si ponerlo o no
-                trazarCaminoFoton(rebote, l, profundidad-1);
+                trazarCaminoFoton(rebote, l, profundidad-1, normales, causticas, true);
             }
             //Si no, el rayico a casa que hace frio
         }

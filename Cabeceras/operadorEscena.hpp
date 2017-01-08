@@ -12,6 +12,7 @@
 #include "camara.hpp"
 #include "box.hpp"
 #include "montecarlo.hpp"
+#include "kdtree.hpp"
 
 #include <vector>
 #include <string>
@@ -42,10 +43,18 @@ private:
     const int PATH_LEN = 20;
     const double K_LUZ_INDIR = 1.0 / (NUMERO_RAYOS_INDIRECTA + 0.000000000001);
 
+    //Numero de fotones por mapa
+    const int FOTONES = 1000;
+
     
     Camara camara;
     std :: vector < Figura * > figuras;
     std :: vector < Luz > luces;
+    kdtree fotonMap;
+    kdtree fotonMapCaustics;
+
+
+
 
     /**
      * Calcula la BDRF de Phong en el punto dado de la figura dada.
@@ -63,7 +72,9 @@ private:
      */
     double interseccion(Rayo r, Figura ** choque);
 
-    void trazarCaminoFoton(Rayo r, Luz l, int profundidad);
+    void trazarCaminoFoton(Rayo r, Luz l, int profundidad, int *, int *, bool);
+
+    void lanzarFotones();
 
 public:
 

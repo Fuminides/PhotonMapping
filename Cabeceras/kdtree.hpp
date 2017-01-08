@@ -58,7 +58,7 @@ struct kdtree{
 	 */
 	friend std::vector<Foton> knearest(kdtree& arbol, Punto p,int k);
    
- private:
+ public:
 	struct NodoBinario {
        Plano plano;
        Foton dato;
@@ -116,7 +116,7 @@ struct kdtree{
 	/*
 	 * Asigna en min el foton mas proximo a un punto.
 	 */
-	friend void nearestRec(typename kdtree::NodoBinario*& nodo,Punto p,double& dMin,Foton& min);
+	friend Foton nearestRec(typename kdtree::NodoBinario*& nodo,Punto p,double& dMin,Foton& min);
 	/* 
 	 * Ha borrado el foton 'e', en caso de encontrarlo búscandolo a partir del 
      * nodo 'nodo' que se encuentra en el nivel 'nivel, modificando 'tamanyo' y 

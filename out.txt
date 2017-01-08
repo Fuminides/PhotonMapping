@@ -1,0 +1,104 @@
+In file included from ./Cabeceras/operadorEscena.hpp:15:0,
+                 from ./Sources/operadorEscena.cpp:1:
+./Cabeceras/kdtree.hpp: In function ‘Foton nearestRec(kdtree::NodoBinario*&, Punto, double&, Foton)’:
+./Cabeceras/kdtree.hpp:422:36: error: call of overloaded ‘nearestRec(kdtree::NodoBinario*&, Punto&, double&, Foton&)’ is ambiguous
+    nearestRec(nodo->dcho,p,d,actual);
+                                    ^
+./Cabeceras/kdtree.hpp:422:36: note: candidates are:
+./Cabeceras/kdtree.hpp:416:7: note: Foton nearestRec(kdtree::NodoBinario*&, Punto, double&, Foton)
+ Foton nearestRec(typename kdtree::NodoBinario*& nodo, Punto p,double& dMin,Foton min){
+       ^
+./Cabeceras/kdtree.hpp:119:15: note: Foton nearestRec(kdtree::NodoBinario*&, Punto, double&, Foton&)
+  friend Foton nearestRec(typename kdtree::NodoBinario*& nodo,Punto p,double& dMin,Foton& min);
+               ^
+./Cabeceras/kdtree.hpp:423:35: error: call of overloaded ‘nearestRec(kdtree::NodoBinario*&, Punto&, double&, Foton&)’ is ambiguous
+    nearestRec(nodo->izq,p,d,actual);
+                                   ^
+./Cabeceras/kdtree.hpp:423:35: note: candidates are:
+./Cabeceras/kdtree.hpp:416:7: note: Foton nearestRec(kdtree::NodoBinario*&, Punto, double&, Foton)
+ Foton nearestRec(typename kdtree::NodoBinario*& nodo, Punto p,double& dMin,Foton min){
+       ^
+./Cabeceras/kdtree.hpp:119:15: note: Foton nearestRec(kdtree::NodoBinario*&, Punto, double&, Foton&)
+  friend Foton nearestRec(typename kdtree::NodoBinario*& nodo,Punto p,double& dMin,Foton& min);
+               ^
+./Cabeceras/kdtree.hpp:426:36: error: call of overloaded ‘nearestRec(kdtree::NodoBinario*&, Punto&, double&, Foton&)’ is ambiguous
+    nearestRec(nodo->dcho,p,dMin,min);
+                                    ^
+./Cabeceras/kdtree.hpp:426:36: note: candidates are:
+./Cabeceras/kdtree.hpp:416:7: note: Foton nearestRec(kdtree::NodoBinario*&, Punto, double&, Foton)
+ Foton nearestRec(typename kdtree::NodoBinario*& nodo, Punto p,double& dMin,Foton min){
+       ^
+./Cabeceras/kdtree.hpp:119:15: note: Foton nearestRec(kdtree::NodoBinario*&, Punto, double&, Foton&)
+  friend Foton nearestRec(typename kdtree::NodoBinario*& nodo,Punto p,double& dMin,Foton& min);
+               ^
+./Cabeceras/kdtree.hpp:427:35: error: call of overloaded ‘nearestRec(kdtree::NodoBinario*&, Punto&, double&, Foton&)’ is ambiguous
+    nearestRec(nodo->izq,p,dMin,min);
+                                   ^
+./Cabeceras/kdtree.hpp:427:35: note: candidates are:
+./Cabeceras/kdtree.hpp:416:7: note: Foton nearestRec(kdtree::NodoBinario*&, Punto, double&, Foton)
+ Foton nearestRec(typename kdtree::NodoBinario*& nodo, Punto p,double& dMin,Foton min){
+       ^
+./Cabeceras/kdtree.hpp:119:15: note: Foton nearestRec(kdtree::NodoBinario*&, Punto, double&, Foton&)
+  friend Foton nearestRec(typename kdtree::NodoBinario*& nodo,Punto p,double& dMin,Foton& min);
+               ^
+./Sources/operadorEscena.cpp: In member function ‘void operadorEscena::trazarCaminoFoton(Rayo, Luz, int, int*, int*, bool)’:
+./Sources/operadorEscena.cpp:598:48: error: invalid initialization of non-const reference of type ‘kdtree&’ from an rvalue of type ‘kdtree*’
+                 anyadir(&fotonMapCaustics,foton);
+                                                ^
+In file included from ./Cabeceras/operadorEscena.hpp:15:0,
+                 from ./Sources/operadorEscena.cpp:1:
+./Cabeceras/kdtree.hpp:147:6: error: in passing argument 1 of ‘void anyadir(kdtree&, Foton)’
+ void anyadir(kdtree& arbol,Foton e) {
+      ^
+./Sources/operadorEscena.cpp:602:41: error: invalid initialization of non-const reference of type ‘kdtree&’ from an rvalue of type ‘kdtree*’
+                 anyadir(&fotonMap, foton);
+                                         ^
+In file included from ./Cabeceras/operadorEscena.hpp:15:0,
+                 from ./Sources/operadorEscena.cpp:1:
+./Cabeceras/kdtree.hpp:147:6: error: in passing argument 1 of ‘void anyadir(kdtree&, Foton)’
+ void anyadir(kdtree& arbol,Foton e) {
+      ^
+In file included from ./Cabeceras/operadorEscena.hpp:15:0,
+                 from ./Sources/pruebas.cpp:11:
+./Cabeceras/kdtree.hpp: In function ‘Foton nearestRec(kdtree::NodoBinario*&, Punto, double&, Foton)’:
+./Cabeceras/kdtree.hpp:422:36: error: call of overloaded ‘nearestRec(kdtree::NodoBinario*&, Punto&, double&, Foton&)’ is ambiguous
+    nearestRec(nodo->dcho,p,d,actual);
+                                    ^
+./Cabeceras/kdtree.hpp:422:36: note: candidates are:
+./Cabeceras/kdtree.hpp:416:7: note: Foton nearestRec(kdtree::NodoBinario*&, Punto, double&, Foton)
+ Foton nearestRec(typename kdtree::NodoBinario*& nodo, Punto p,double& dMin,Foton min){
+       ^
+./Cabeceras/kdtree.hpp:119:15: note: Foton nearestRec(kdtree::NodoBinario*&, Punto, double&, Foton&)
+  friend Foton nearestRec(typename kdtree::NodoBinario*& nodo,Punto p,double& dMin,Foton& min);
+               ^
+./Cabeceras/kdtree.hpp:423:35: error: call of overloaded ‘nearestRec(kdtree::NodoBinario*&, Punto&, double&, Foton&)’ is ambiguous
+    nearestRec(nodo->izq,p,d,actual);
+                                   ^
+./Cabeceras/kdtree.hpp:423:35: note: candidates are:
+./Cabeceras/kdtree.hpp:416:7: note: Foton nearestRec(kdtree::NodoBinario*&, Punto, double&, Foton)
+ Foton nearestRec(typename kdtree::NodoBinario*& nodo, Punto p,double& dMin,Foton min){
+       ^
+./Cabeceras/kdtree.hpp:119:15: note: Foton nearestRec(kdtree::NodoBinario*&, Punto, double&, Foton&)
+  friend Foton nearestRec(typename kdtree::NodoBinario*& nodo,Punto p,double& dMin,Foton& min);
+               ^
+./Cabeceras/kdtree.hpp:426:36: error: call of overloaded ‘nearestRec(kdtree::NodoBinario*&, Punto&, double&, Foton&)’ is ambiguous
+    nearestRec(nodo->dcho,p,dMin,min);
+                                    ^
+./Cabeceras/kdtree.hpp:426:36: note: candidates are:
+./Cabeceras/kdtree.hpp:416:7: note: Foton nearestRec(kdtree::NodoBinario*&, Punto, double&, Foton)
+ Foton nearestRec(typename kdtree::NodoBinario*& nodo, Punto p,double& dMin,Foton min){
+       ^
+./Cabeceras/kdtree.hpp:119:15: note: Foton nearestRec(kdtree::NodoBinario*&, Punto, double&, Foton&)
+  friend Foton nearestRec(typename kdtree::NodoBinario*& nodo,Punto p,double& dMin,Foton& min);
+               ^
+./Cabeceras/kdtree.hpp:427:35: error: call of overloaded ‘nearestRec(kdtree::NodoBinario*&, Punto&, double&, Foton&)’ is ambiguous
+    nearestRec(nodo->izq,p,dMin,min);
+                                   ^
+./Cabeceras/kdtree.hpp:427:35: note: candidates are:
+./Cabeceras/kdtree.hpp:416:7: note: Foton nearestRec(kdtree::NodoBinario*&, Punto, double&, Foton)
+ Foton nearestRec(typename kdtree::NodoBinario*& nodo, Punto p,double& dMin,Foton min){
+       ^
+./Cabeceras/kdtree.hpp:119:15: note: Foton nearestRec(kdtree::NodoBinario*&, Punto, double&, Foton&)
+  friend Foton nearestRec(typename kdtree::NodoBinario*& nodo,Punto p,double& dMin,Foton& min);
+               ^
+make: *** [compile] Error 1
