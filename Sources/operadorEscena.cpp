@@ -260,7 +260,18 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
             B = B / (M_PI*radioCausticas*radioCausticas);
             cAux.set_values(R,G,B, NORMALIZAR_COLORES);
             cIndir.sumar(cAux);
-            
+
+            Vector vAux = restaPuntos(puntoRender,p);
+            vAux.normalizar();
+
+
+            if ( figura->getBRDF() == 0){
+                bdrf = phong(figura, p, vAux,restaPuntos(origenVista,p));   
+            } 
+            else if (figura->getBRDF() == 1){
+                bdrf = ward(restaPuntos(origenVista,p), vAux, figura->normal(p), p);
+            }
+            cIndir.multiplicar(bdrf);
             inicial.sumar(cIndir);
 
         }
