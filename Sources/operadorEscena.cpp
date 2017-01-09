@@ -235,10 +235,19 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
             std::vector<Foton> fotones = knearest(fotonMap, p, 50), causticFoton = knearest(fotonMapCaustics, p ,50);
             double radio = lejano(fotones, p), radioCausticas = lejano(causticFoton, p);
             double R = 0.0, G = 0.0, B = 0.0;
-            Color cIndir, cAux;
+            Color cIndir, cAux2;
 
             for(Foton fotonAux:fotones){
                 Color cAux = fotonAux.getColor();
+               
+                if ( figura->getBRDF() == 0){
+                    bdrf = phong(figura, p, fotonAux.getDireccion() ,restaPuntos(origenVista,p));   
+                } 
+                else if (figura->getBRDF() == 1){
+                    bdrf = ward(restaPuntos(origenVista,p), fotonAux.getDireccion() , figura->normal(p), p);
+                }
+                cAux.multiplicar(bdrf);
+
                 R+= cAux.splashR();
                 G+= cAux.splashG();
                 B+= cAux.splashB();
@@ -249,29 +258,28 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
             cIndir.set_values(R,G,B, NORMALIZAR_COLORES);
 
             R = 0.0; G = 0.0; B = 0.0;
-            for(Foton fotonAux:fotonMapCaustics){
-                Color cAux = fotonAux.getColor();
+            for(Foton fotonAux:causticFoton){
+               Color cAux = fotonAux.getColor();
+               
+                if ( figura->getBRDF() == 0){
+                    bdrf = phong(figura, p, fotonAux.getDireccion() ,restaPuntos(origenVista,p));   
+                } 
+                else if (figura->getBRDF() == 1){
+                    bdrf = ward(restaPuntos(origenVista,p), fotonAux.getDireccion() , figura->normal(p), p);
+                }
+                cAux.multiplicar(bdrf);
+
                 R+= cAux.splashR();
                 G+= cAux.splashG();
                 B+= cAux.splashB();
             }
+
             R = R / (M_PI*radioCausticas*radioCausticas);
             G = G / (M_PI*radioCausticas*radioCausticas);
             B = B / (M_PI*radioCausticas*radioCausticas);
-            cAux.set_values(R,G,B, NORMALIZAR_COLORES);
-            cIndir.sumar(cAux);
-
-            Vector vAux = restaPuntos(puntoRender,p);
-            vAux.normalizar();
-
-
-            if ( figura->getBRDF() == 0){
-                bdrf = phong(figura, p, vAux,restaPuntos(origenVista,p));   
-            } 
-            else if (figura->getBRDF() == 1){
-                bdrf = ward(restaPuntos(origenVista,p), vAux, figura->normal(p), p);
-            }
-            cIndir.multiplicar(bdrf);
+            cAux2.set_values(R,G,B, NORMALIZAR_COLORES);
+            cIndir.sumar(cAux2);
+ 
             inicial.sumar(cIndir);
 
         }
@@ -635,13 +643,13 @@ void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad, int * nor
             Foton foton;
             Vector direccion = r.getVector();
             pInterseccion.set_values(origen.getX() + direccion.getX()*min,origen.getY()+direccion.getY()*min,origen.getZ()+direccion.getZ()*min);
-            foton.set_values(direccion, l.getColor(), pInterseccion);
+            foton.set_values(valorPorVector(direccion, -1) , l.getColor(), pInterseccion);
             if ( caustica ){
-                anyadir(&fotonMapCaustics,foton);
+                anyadir(fotonMapCaustics,foton);
                 *causticas+=1;
             }
             else{
-                anyadir(&fotonMap, foton);
+                anyadir(fotonMap, foton);
                 *normales+=1;
             }
         }
@@ -721,3 +729,18 @@ void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad, int * nor
     }
 }
 
+
+double operadorEscena::lejano(std::vector<Foton> fotones, Punto p){
+    double resultado = 0.0;
+
+    for(Foton foton : fotones){
+        Vector dist = restaPuntos(foton.getPosicion(), p);
+        double modulo = dist.modulo();
+
+        if (resultado < modulo){
+            resultado = modulo;
+        }
+    }
+
+    return resultado;
+}

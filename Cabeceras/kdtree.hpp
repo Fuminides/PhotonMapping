@@ -23,31 +23,31 @@ struct kdtree{
 	/* 
 	 * Crea un kdtree sin ningún foton, vacío
 	 */
-    friend void crear(kdtree& arbol);
+  inline friend void crear(kdtree& arbol);
 	/* 
 	 * Ha insertado el foton 'e' en el kdtree 'arbol'. Si había un
 	 * foton igual a 'e' previamente, lo ha sobreescrito
 	 */
-	friend void anyadir(kdtree& arbol,Foton e);
+	inline friend void anyadir(kdtree& arbol,Foton e);
 	/* 
 	 * Devuelve verdad si y solo si en el kdtree 'arbol' hay un
      * foton igual al foton 'e'. En caso contrario devuelve falso
 	 */
-	friend bool esta(const kdtree& arbol,Foton e);
+	inline friend bool esta(const kdtree& arbol,Foton e);
 	/* 
 	 * Si en 'arbol' hay un foton igual a 'e' devuelve ese foton, en caso 
      * contrario el parámetro error que se pasa por referencia se pondrá a true
 	 */
-	friend Foton obtener(const kdtree& arbol, Foton e,bool &error);
+	inline friend Foton obtener(const kdtree& arbol, Foton e,bool &error);
 	/* 
 	 * Devuelve el número de elementos que hay en el kdtree 'arbol'
 	 */
-	friend int tamanyo(const kdtree& arbol);
+	inline friend int tamanyo(const kdtree& arbol);
 	/* 
 	 * Devuelve true y solo si el kdtree 'arbol' no tiene ningún foton, 
 	 * en caso contrario devuelve falso
 	 */
-	friend bool esVacia(const kdtree& arbol);
+	inline friend bool esVacia(const kdtree& arbol);
 	/* 
 	 * Si en 'arbol' hay un foton igual a 'e', borra ese foton y devuelve 
      * true. En caso de que no hay ningun foton igual a 'e' devuelve false
@@ -57,7 +57,7 @@ struct kdtree{
 	/*
 	 * Devuelve los k fotones mas proximos dado un punto.
 	 */
-	friend std::vector<Foton> knearest(kdtree& arbol, Punto p,int k);
+	inline friend std::vector<Foton> knearest(kdtree& arbol, Punto p,int k);
    
  public:
 	struct NodoBinario {
@@ -76,23 +76,23 @@ struct kdtree{
      * 'nodo', lo ha sobreescrito y no ha modificado 'tamanyo'. En caso contrario
      * ha insertado el elemento y ha modificado 'tamanyo'
 	 */
-	friend void insertarRec(typename kdtree::NodoBinario*& nodo, Foton e, int nivel);
+	inline friend void insertarRec(typename kdtree::NodoBinario*& nodo, Foton e, int nivel);
 	/* 
 	 * Devuelve 1 si los fotones e y e2 son iguales y 0 en caso contrario
 	 */ 
-	friend int comparar(Foton e,Foton e2);
+	inline friend int comparar(Foton e,Foton e2);
 	/* 
 	 * Ha buscado de forma recursiva el elemento 'e' a partir del nodo 'nodo' que se
      * encuentra en el nivel 'nivel'. Si ha encontrado un elemento igual a 'e' ha 
      * devuelto true, en caso contrario false
 	 */
-	friend bool estarRec(typename kdtree::NodoBinario* nodo, Foton e);
+	inline friend bool estarRec(typename kdtree::NodoBinario* nodo, Foton e);
 	/* 
 	 * Ha devuelto el elemento igual a 'e' si se encontraba a partir del nodo 'nodo'
      * que se encuentra en el nivel 'nivel', poniendo además error a false. En caso
      * de no encontrarlo, y por lo tanto no haberlo podido, ha puesto error a true
 	 */
-	friend Foton obtenerRec(typename kdtree::NodoBinario* nodo, Foton e, bool &error);
+	inline friend Foton obtenerRec(typename kdtree::NodoBinario* nodo, Foton e, bool &error);
 	/* 
 	 * Ha modificado el valor 'max' con el valor de 'dato' y posteriormente a 
 	 * invocado a buscado en el subárbol izquierdo en el caso de que nivel&2 no 
@@ -118,11 +118,11 @@ struct kdtree{
 	 * Devuelve true si el foton e se encuentra en el array anyadidos , false
 	 * en caso contrario
 	 */
-	friend bool estaArray (int num,Foton e,Foton anyadidos[]);
+	inline friend bool estaArray (int num,Foton e,Foton anyadidos[]);
 	/*
 	 * Asigna en min el foton mas proximo a un punto.
 	 */
-	friend void nearestRec(typename kdtree::NodoBinario*& nodo,Punto p,double& dMin,Foton& min,int num,Foton anyadidos[]);
+	inline friend void nearestRec(typename kdtree::NodoBinario*& nodo,Punto p,double& dMin,Foton& min,int num,Foton anyadidos[]);
 	/* 
 	 * Ha borrado el foton 'e', en caso de encontrarlo búscandolo a partir del 
      * nodo 'nodo' que se encuentra en el nivel 'nivel, modificando 'tamanyo' y 

@@ -76,6 +76,8 @@ private:
 
     void lanzarFotones();
 
+    double lejano(std::vector<Foton> fotones, Punto p);
+
 public:
 
     //Contrastes
