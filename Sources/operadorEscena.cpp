@@ -279,6 +279,7 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
             B = B / (M_PI*radioCausticas*radioCausticas);
             cAux2.set_values(R,G,B, NORMALIZAR_COLORES);
             cIndir.sumar(cAux2);
+            if ( cIndir.max() > 0) cout << "Bien!\n";
  
             inicial.sumar(cIndir);
 
@@ -604,9 +605,11 @@ int operadorEscena::execute_thread(int id, int intervalo,  int * cuenta, list<Ra
 }
 
 void operadorEscena::trazar_fotones(){
-    int numLuces = luces.size(), restantes = FOTONES, restantesCausticas = FOTONES;
-
-    while ((restantes > 0) | (restantesCausticas > 0)){
+    int numLuces = luces.size(), restantes = FOTONES, restantesCausticas = FOTONES_CAUSTICA;
+    int iteracion = 1;
+    while ((restantes > 0) | (restantesCausticas > 1)){
+        cout << "Fotones por mapear restantes (Iteracion: "<<iteracion++<<") " <<": Normales ("<<FOTONES<<"): " << -(restantes-FOTONES) << " , Causticas ("<<(FOTONES_CAUSTICA-2)<<"): " << -(restantesCausticas-FOTONES_CAUSTICA) << "\r";
+        cout.flush();
         double fotonesPorLuz = (restantes+restantesCausticas)*1.0/(numLuces*1.0);
         //Primero sampleamos las luces puntuales
         for(Luz luz:luces){
@@ -616,7 +619,7 @@ void operadorEscena::trazar_fotones(){
                     trazarCaminoFoton(rayo, luz, PATH_LEN, &restantes, &restantesCausticas, false);
                 }
             }
-        } 
+        }
         //Luego, las luces de area
         for(Figura * figura: figuras){
             if (figura->isLuz()){
@@ -629,6 +632,8 @@ void operadorEscena::trazar_fotones(){
             }
         }
     }
+    cout << "\nMapas de fotones creados.\n";
+    cout.flush();
 }
 
 void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad, int * normales, int * causticas, bool caustica){
@@ -637,21 +642,23 @@ void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad, int * nor
     Punto pInterseccion;
     Punto origen = r.getOrigen();
     double min = interseccion(r, &choque);
+
     if(min > -1){
         if( profundidad != PATH_LEN){
-            //Guardamos
+           //Guardamos
             Foton foton;
             Vector direccion = r.getVector();
             pInterseccion.set_values(origen.getX() + direccion.getX()*min,origen.getY()+direccion.getY()*min,origen.getZ()+direccion.getZ()*min);
             foton.set_values(valorPorVector(direccion, -1) , l.getColor(), pInterseccion);
-            if ( caustica ){
+            if ( caustica && (*causticas > 0) ){
                 anyadir(fotonMapCaustics,foton);
-                *causticas+=1;
+                *causticas+=-1;
             }
-            else{
+            else if ( *normales > 0 ) {
                 anyadir(fotonMap, foton);
-                *normales+=1;
+                *normales+=-1;
             }
+  
         }
         //Seguimos el camino
         if( profundidad > 0){
@@ -670,9 +677,9 @@ void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad, int * nor
                 Vector direccion = r.getVector();
 
                 pInterseccion.set_values(origen.getX() + direccion.getX()*min,origen.getY()+direccion.getY()*min,origen.getZ()+direccion.getZ()*min);
-
                 do{
                     direccion.set_values(dist(mt), dist(mt),dist(mt)); //Creamos un vector que este en la direccion que queremos.
+                    if (productoEscalar(direccion, choque->normal(pInterseccion)) <= 0) direccion = valorPorVector(direccion,-1);
                 } while (productoEscalar(direccion, choque->normal(pInterseccion)) <= 0);
 
                 direccion.normalizar();
