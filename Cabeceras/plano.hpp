@@ -12,6 +12,7 @@
 #include "punto.hpp"
 #include "rayo.hpp"
 #include "operadorVector.hpp"
+#include "montecarlo.hpp"
 
 #include <math.h>
 #include <vector>
