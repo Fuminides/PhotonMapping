@@ -32,9 +32,9 @@ private:
 
     
     //Coeficientes de ajuste (Usados para debug)
-    const double AMBIENTE = 1;
+    const double AMBIENTE = 1.0;
     const double REFRACCION_MEDIO = 1;
-    const double K_LUZ_DIR = 0;
+    const double K_LUZ_DIR = 1;
 
     //Caminos especulares
     const int NUMERO_REBOTES  = 4;
@@ -45,7 +45,7 @@ private:
 
     //Numero de fotones por mapa
     const int FOTONES = 10000;
-    const int FOTONES_CAUSTICA = 10000;
+    const int FOTONES_CAUSTICA = 500;
 
     
     Camara camara;

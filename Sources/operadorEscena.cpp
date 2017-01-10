@@ -104,17 +104,18 @@ void operadorEscena::dibujar(){
     }
     myfile.close();
 
-    unsigned char buffer[18198]; //El tamano del buffer ha sido escogido experimentando con tiempos de ejecucion
+    unsigned char buffer[8088]; //El tamano del buffer ha sido escogido experimentando con tiempos de ejecucion
     FILE *fp;
     fp=fopen("example.ppm", "a");
 
-    int contador = 0;
-    for ( int j = 0; j <rayos.size(); j = j+1){
+    int contador = 0, rep = rayos.size();
+
+    for ( int j = 0; j <rep; j = j+1){
         buffer[contador] =  pixels[j].splashR();
         buffer[contador+1] = pixels[j].splashG();
         buffer[contador+2] =  pixels[j].splashB();
         contador+=3;
-        if ( contador == 18198 ){
+        if ( contador == 8088 ){
             fwrite(buffer, sizeof(unsigned char), contador, fp);
             contador = 0;
         }
@@ -241,16 +242,18 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
                 Color cAux = fotonAux.getColor();
                
                 if ( figura->getBRDF() == 0){
-                    bdrf = phong(figura, p, fotonAux.getDireccion() ,restaPuntos(origenVista,p));   
+                    bdrf = phong(figura, p, fotonAux.getDireccion() ,restaPuntos(origenVista,p)) + AMBIENTE/M_PI;   
                 } 
                 else if (figura->getBRDF() == 1){
-                    bdrf = ward(restaPuntos(origenVista,p), fotonAux.getDireccion() , figura->normal(p), p);
+                    bdrf = ward(restaPuntos(origenVista,p), fotonAux.getDireccion() , figura->normal(p), p) + AMBIENTE/M_PI;
                 }
+
                 cAux.multiplicar(bdrf);
 
                 R+= cAux.splashR();
                 G+= cAux.splashG();
                 B+= cAux.splashB();
+
             }
             R = R / (M_PI*radio*radio);
             G = G / (M_PI*radio*radio);
@@ -262,10 +265,10 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
                Color cAux = fotonAux.getColor();
                
                 if ( figura->getBRDF() == 0){
-                    bdrf = phong(figura, p, fotonAux.getDireccion() ,restaPuntos(origenVista,p));   
+                    bdrf = phong(figura, p, fotonAux.getDireccion() ,restaPuntos(origenVista,p))  + AMBIENTE/M_PI;   
                 } 
                 else if (figura->getBRDF() == 1){
-                    bdrf = ward(restaPuntos(origenVista,p), fotonAux.getDireccion() , figura->normal(p), p);
+                    bdrf = ward(restaPuntos(origenVista,p), fotonAux.getDireccion() , figura->normal(p), p) + AMBIENTE/M_PI;
                 }
                 cAux.multiplicar(bdrf);
 
@@ -279,7 +282,7 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
             B = B / (M_PI*radioCausticas*radioCausticas);
             cAux2.set_values(R,G,B, NORMALIZAR_COLORES);
             cIndir.sumar(cAux2);
-            if ( cIndir.max() > 0) cout << "Bien!\n";
+            //if ( cIndir.max() > 0) cout << cIndir.to_string() << "\n";
  
             inicial.sumar(cIndir);
 
@@ -326,10 +329,10 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
 
 
                             if ( figura->getBRDF() == 0){
-                                bdrf = phong(figura, p, vAux,restaPuntos(origenVista,p));   
+                                bdrf = phong(figura, p, vAux,restaPuntos(origenVista,p)) + AMBIENTE/M_PI;   
                             } 
                             else if (figura->getBRDF() == 1){
-                                bdrf = ward(restaPuntos(origenVista,p), vAux, figura->normal(p), p);
+                                bdrf = ward(restaPuntos(origenVista,p), vAux, figura->normal(p), p) + AMBIENTE/M_PI;
                             }
                             
                             cIndir.multiplicar(bdrf);
@@ -370,11 +373,11 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
                     int i;
 
                     //Si no choca con nada, podemos intentar hacia otro lado
-                    for ( i = 0; (min == -1) && (i <2); i++){
+                    /*for ( i = 0; (min == -1) && (i <2); i++){
                         Vector vect = montecarlo.calcularw().front();
                         rayo.set_values(p, vect);
                         min = interseccion(rayo, &figuraAux);
-                    }
+                    }*/
 
                     if ( min != -1){
                         Punto puntoRender, origenRayos = p;
@@ -395,10 +398,10 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
                                 vAux.normalizar();
 
                                 if ( figura->getBRDF() == 0){
-                                    bdrf = phong(figura, p, vAux,restaPuntos(origenVista,p));   
+                                    bdrf = phong(figura, p, vAux,restaPuntos(origenVista,p)) + AMBIENTE/M_PI;   
                                 } 
                                 else if (figura->getBRDF() == 1){
-                                    bdrf = ward(restaPuntos(origenVista,p), vAux, figura->normal(p), p);
+                                    bdrf = ward(restaPuntos(origenVista,p), vAux, figura->normal(p), p) + AMBIENTE/M_PI;
                                 }
                                 
                                 colorAux.multiplicar(bdrf);
@@ -419,10 +422,10 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
                             vAux.normalizar();
 
                             if ( figura->getBRDF() == 0){
-                                bdrf = phong(figura, p, vAux,restaPuntos(origenVista,p));   
+                                bdrf = phong(figura, p, vAux,restaPuntos(origenVista,p)) + AMBIENTE/M_PI;   
                             } 
                             else if (figura->getBRDF() == 1){
-                                bdrf = ward(restaPuntos(origenVista,p), vAux, figura->normal(p), p);
+                                bdrf = ward(restaPuntos(origenVista,p), vAux, figura->normal(p), p) + AMBIENTE/M_PI;
                             }
                             
                             colorAux.multiplicar(bdrf);
@@ -644,17 +647,19 @@ void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad, int * nor
     double min = interseccion(r, &choque);
 
     if(min > -1){
-        if( profundidad != PATH_LEN){
+        if( (profundidad != PATH_LEN) && (l.getColor().max()*255 > 0) && (choque->getReflejo() < 1) && (choque->getRefraccion() < 1)){
            //Guardamos
             Foton foton;
             Vector direccion = r.getVector();
             pInterseccion.set_values(origen.getX() + direccion.getX()*min,origen.getY()+direccion.getY()*min,origen.getZ()+direccion.getZ()*min);
             foton.set_values(valorPorVector(direccion, -1) , l.getColor(), pInterseccion);
             if ( caustica && (*causticas > 0) ){
+                //cout << l.getColor().to_string() << "\n";
                 anyadir(fotonMapCaustics,foton);
                 *causticas+=-1;
             }
             else if ( *normales > 0 ) {
+                //cout << l.getColor().to_string() << "\n";
                 anyadir(fotonMap, foton);
                 *normales+=-1;
             }
@@ -686,8 +691,8 @@ void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad, int * nor
 
                 l.setOrigen(r.getOrigen());
                 Color cAux = choque->getColor();
-                if (choque->getBRDF() == 0 )  cAux.multiplicar(phong(choque, pInterseccion, valorPorVector(r.getVector(),-1), direccion));
-                else if (choque->getBRDF() == 1 ) cAux.multiplicar(ward(direccion, valorPorVector(r.getVector(),-1), choque->normal(pInterseccion),pInterseccion));
+                if (choque->getBRDF() == 0 )  cAux.multiplicar(phong(choque, pInterseccion, valorPorVector(r.getVector(),1), direccion)+ AMBIENTE/M_PI);
+                else if (choque->getBRDF() == 1 ) cAux.multiplicar(ward(direccion, valorPorVector(r.getVector(),1), choque->normal(pInterseccion),pInterseccion)+ AMBIENTE/M_PI);
 
                 l.setColor(cAux);
                 r.set_values(pInterseccion, direccion);
@@ -722,12 +727,8 @@ void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad, int * nor
                 refraccion.normalizar();
 
                 rebote.set_values(render, refraccion);
-                Color cAux = choque->getColor();
-                if (choque->getBRDF() == 0 )  cAux.multiplicar(phong(choque, pInterseccion, valorPorVector(r.getVector(),-1), refraccion));
-                else if (choque->getBRDF() == 1 ) cAux.multiplicar(ward(refraccion, valorPorVector(r.getVector(),-1),normal,pInterseccion));
 
                 l.setOrigen(r.getOrigen());
-                l.setColor(cAux);
                 //l.atenuar(min); //?? No se si ponerlo o no
                 trazarCaminoFoton(rebote, l, profundidad-1, normales, causticas, true);
             }
