@@ -88,12 +88,12 @@ std::vector<Rayo> Plano::muestrearFotones(int n){
 	auxP.set_values(0,0,0);
 	std::random_device rd;
     std::mt19937 mt(rd());
-    std::uniform_real_distribution<double> dist(0.0, 1.0);
+    std::uniform_real_distribution<double> dist(-1.0, 1.0);
 
 	for (int i = 0; i < n; ++i)
 	{
 		Punto sample;
-		double height = dist(mt)*altura, weidght = dist(mt)*anchura;
+		double height = abs(dist(mt))*altura, weidght = abs(dist(mt))*anchura;
 		Vector aux1 = valorPorVector(vectorY, height), aux2 = valorPorVector(vectorX, weidght);
 
 		sample = sumaPuntoVector(origen,aux1);

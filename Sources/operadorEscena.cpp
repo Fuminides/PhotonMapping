@@ -647,7 +647,8 @@ void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad, int * nor
     double min = interseccion(r, &choque);
 
     if(min > -1){
-        if( (profundidad != PATH_LEN) && (l.getColor().max()*255 > 0) && (choque->getReflejo() < 1) && (choque->getRefraccion() < 1)){
+        //cout << "Ref: " 
+        if( (profundidad != PATH_LEN) && (l.getColor().max()*255 > 0) && (choque->getReflejo() == 0)){
            //Guardamos
             Foton foton;
             Vector direccion = r.getVector();
@@ -669,11 +670,11 @@ void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad, int * nor
         if( profundidad > 0){
             //Ruleta Rusa
             Vector azar;
-            int umbral = 7, difuso = (int) (10*choque->getCoefRefraccion())/2;
+            int umbral = 7, difuso = (int) (umbral*choque->getCoefRefraccion());
             std::random_device rd;
             std::mt19937 mt(rd());
             std::uniform_real_distribution<double> dist(0.0, 1.0);
-            int suerte = (int) (dist(mt)*10);
+            int suerte = ((int) (dist(mt)*10));
 
             if ( suerte < (umbral - difuso)){ //Rebote
                 Vector azar;
@@ -682,9 +683,14 @@ void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad, int * nor
                 Vector direccion = r.getVector();
 
                 pInterseccion.set_values(origen.getX() + direccion.getX()*min,origen.getY()+direccion.getY()*min,origen.getZ()+direccion.getZ()*min);
+                Montecarlo montecarlo;
+
+                montecarlo.set_values(restaPuntos(pInterseccion,aux), choque->normal(pInterseccion), 1);
+
                 do{
-                    direccion.set_values(dist(mt), dist(mt),dist(mt)); //Creamos un vector que este en la direccion que queremos.
-                    if (productoEscalar(direccion, choque->normal(pInterseccion)) <= 0) direccion = valorPorVector(direccion,-1);
+                    //direccion.set_values(dist(mt),dist(mt),dist(mt));
+                    direccion = montecarlo.calcularw().front(); //Creamos un vector que este en la direccion que queremos.
+                    //cout << "Punto: " << pInterseccion.to_string() << ", Vector: " << direccion.to_string() << ", Normal: " << choque->normal(pInterseccion).to_string() << "\n";
                 } while (productoEscalar(direccion, choque->normal(pInterseccion)) <= 0);
 
                 direccion.normalizar();
@@ -700,7 +706,7 @@ void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad, int * nor
 
                 trazarCaminoFoton(r,l,profundidad-1, normales, causticas, false);
             }
-            else if ( suerte < umbral){ //Difuso
+            else if ( suerte < umbral){ //refraccion
                 Vector direccion = r.getVector();
                 pInterseccion.set_values(origen.getX() + direccion.getX()*min,origen.getY()+direccion.getY()*min,origen.getZ()+direccion.getZ()*min);
                 Vector normal = choque->normal(pInterseccion), refraccion;
@@ -722,11 +728,10 @@ void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad, int * nor
                 Rayo rebote;
                 Punto render;
 
-                render.set_values(r.getOrigen().getX() + direccion.getX()*min,r.getOrigen().getY()+direccion.getY()*min,r.getOrigen().getZ()+direccion.getZ()*min);
                 refraccion = sumaVectores(valorPorVector(vista, n1/n2), valorPorVector(normal, (n1/n2 * cosenoAngulo1 - sqrt(1-senoCAngulo2))));
                 refraccion.normalizar();
 
-                rebote.set_values(render, refraccion);
+                rebote.set_values(pInterseccion, refraccion);
 
                 l.setOrigen(r.getOrigen());
                 //l.atenuar(min); //?? No se si ponerlo o no

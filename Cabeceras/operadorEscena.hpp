@@ -44,8 +44,8 @@ private:
     const double K_LUZ_INDIR = 1.0 / (NUMERO_RAYOS_INDIRECTA + 0.000000000001);
 
     //Numero de fotones por mapa
-    const int FOTONES = 10000;
-    const int FOTONES_CAUSTICA = 500;
+    const int FOTONES = 1000;
+    const int FOTONES_CAUSTICA = 1000;
 
     
     Camara camara;

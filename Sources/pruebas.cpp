@@ -123,7 +123,7 @@ int main(int argc, char ** argv){
         Punto oPA, oPD, oPI, pF, pA, puntoLuz, origenC, origenLampara;
         Vector nPA, nPD, nPI, nF, nA;
         Camara camera;
-        double boxLenght = 100, lamparaLen = boxLenght/3;
+        double boxLenght = 50, lamparaLen = boxLenght/3;
         Luz luzBox;
 
         escena.PATH_TRACING = false;
@@ -184,7 +184,7 @@ int main(int argc, char ** argv){
         esfera.setOrigen(boxLenght/2, 8, boxLenght/4);
         esfera.setColor(gris);
         esfera.setRadio(8);
-        esfera.setReflejo(0.3);
+        esfera.setReflejo(1.0);
         esfera.setRefraccion(0.0);
         esfera.setCoefRefraccion(0.0);
         esfera.setBRDF(0);
@@ -193,8 +193,8 @@ int main(int argc, char ** argv){
         esfera2.setColor(gris);
         esfera2.setRadio(8);
         esfera2.setReflejo(0.0);
-        esfera2.setRefraccion(4.33);
-        esfera2.setCoefRefraccion(0.3);
+        esfera2.setRefraccion(-1);
+        esfera2.setCoefRefraccion(1.0);
         esfera2.setBRDF(0);
 
         origenLuz3.set_values(boxLenght * 2/3, boxLenght * 2/3, boxLenght/2);
