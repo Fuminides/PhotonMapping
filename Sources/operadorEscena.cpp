@@ -695,13 +695,13 @@ void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad, int * nor
 
                 direccion.normalizar();
 
-                l.setOrigen(r.getOrigen());
                 Color cAux = choque->getColor();
-                if (choque->getBRDF() == 0 )  cAux.multiplicar(phong(choque, pInterseccion, valorPorVector(r.getVector(),1), direccion)+ AMBIENTE/M_PI);
-                else if (choque->getBRDF() == 1 ) cAux.multiplicar(ward(direccion, valorPorVector(r.getVector(),1), choque->normal(pInterseccion),pInterseccion)+ AMBIENTE/M_PI);
+                if (choque->getBRDF() == 0 )  cAux.multiplicar(phong(choque, pInterseccion, valorPorVector(r.getVector(),-1), direccion)+ AMBIENTE/M_PI);
+                else if (choque->getBRDF() == 1 ) cAux.multiplicar(ward(direccion, valorPorVector(r.getVector(),-1), choque->normal(pInterseccion),pInterseccion)+ AMBIENTE/M_PI);
 
                 l.setColor(cAux);
                 r.set_values(pInterseccion, direccion);
+                l.setOrigen(r.getOrigen());
                 //l.atenuar(min); //?? No se si ponerlo o no
 
                 trazarCaminoFoton(r,l,profundidad-1, normales, causticas, false);

@@ -193,7 +193,7 @@ int main(int argc, char ** argv){
         esfera2.setColor(gris);
         esfera2.setRadio(8);
         esfera2.setReflejo(0.0);
-        esfera2.setRefraccion(-1);
+        esfera2.setRefraccion(1.33);
         esfera2.setCoefRefraccion(1.0);
         esfera2.setBRDF(0);
 

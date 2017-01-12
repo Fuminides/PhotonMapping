@@ -92,16 +92,19 @@ std::vector<Rayo> Plano::muestrearFotones(int n){
 
 	for (int i = 0; i < n; ++i)
 	{
-		Punto sample;
+		Punto sample, auxP;
 		double height = abs(dist(mt))*altura, weidght = abs(dist(mt))*anchura;
 		Vector aux1 = valorPorVector(vectorY, height), aux2 = valorPorVector(vectorX, weidght);
 
 		sample = sumaPuntoVector(origen,aux1);
 		sample = sumaPuntoVector(sample, aux2); //Punto al azar del plano
+		Montecarlo montecarlo;
 
 		Vector dir;
+		auxP.set_values(0,0,0);
+		montecarlo.set_values(restaPuntos(sample, auxP), vNormal, 1);
 		do{
-			dir.set_values(dist(mt), dist(mt),dist(mt)); //Creamos un vector que este enla direccion que queremos.
+			dir=montecarlo.calcularw().front(); //Creamos un vector que este enla direccion que queremos.
 		} while (productoEscalar(dir, vNormal) <= 0);
 
 		dir.normalizar();
