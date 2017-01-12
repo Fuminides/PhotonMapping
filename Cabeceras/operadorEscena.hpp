@@ -13,6 +13,13 @@
 #include "box.hpp"
 #include "montecarlo.hpp"
 #include "kdtree.hpp"
+#include "luz.hpp"
+#include "color.hpp"
+#include "figura.hpp"
+#include "foton.hpp"
+#include "plano.hpp"
+#include "punto.hpp"
+#include "vector.hpp"
 
 #include <vector>
 #include <string>

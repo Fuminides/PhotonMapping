@@ -23,7 +23,7 @@ struct kdtree{
 	/* 
 	 * Crea un kdtree sin ningún foton, vacío
 	 */
-    inline friend void crear(kdtree& arbol);
+  inline friend void crear(kdtree& arbol);
 	/* 
 	 * Ha insertado el foton 'e' en el kdtree 'arbol'. Si había un
 	 * foton igual a 'e' previamente, lo ha sobreescrito
@@ -118,11 +118,11 @@ struct kdtree{
 	 * Devuelve true si el foton e se encuentra en el array anyadidos , false
 	 * en caso contrario
 	 */
-	inline friend bool estaArray (int num,Foton e,Foton * anyadidos);
+	inline friend bool estaArray (int num,Foton e,Foton anyadidos[]);
 	/*
 	 * Asigna en min el foton mas proximo a un punto.
 	 */
-	inline friend void nearestRec(typename kdtree::NodoBinario*& nodo,Punto p,double * dMin,Foton ** min,int num,Foton * anyadidos);
+	inline friend void nearestRec(typename kdtree::NodoBinario*& nodo,Punto p,double& dMin,Foton& min,int num,Foton anyadidos[]);
 	/* 
 	 * Ha borrado el foton 'e', en caso de encontrarlo búscandolo a partir del 
      * nodo 'nodo' que se encuentra en el nivel 'nivel, modificando 'tamanyo' y 
@@ -403,19 +403,16 @@ std::vector<Foton> knearest(kdtree& arbol, Punto p,int k){
 	vector<Foton> listado;
 	Foton anyadidos[k];
 	int num=0;
-	Foton * min[1];
-	min[0]=&(arbol.nodo->dato);
-	Punto actual = (**min).getPosicion();
-	//double dMin=sqrt(pow((actual.getX()-p.getX()),2.0) + pow((actual.getY()-p.getY()),2.0) + pow((actual.getZ()-p.getZ()),2.0));
-	//cout<<"La distancia del primero es: "<<dMin<<endl;
-	double dMin = 100000000.0;
-	int i =1;
-	for (int i = 0; i < k; i++){
+	Foton min=(arbol.nodo)->dato;
+	Punto actual = min.getPosicion();
+	double dMin=sqrt(pow((actual.getX()-p.getX()),2.0) + pow((actual.getY()-p.getY()),2.0) + pow((actual.getZ()-p.getZ()),2.0));
+	while(num < k && tamanyo(arbol)>=k){
 		//Iniciamos recorrido del arbol 
-		nearestRec(arbol.nodo,p, &dMin ,min,i,anyadidos);
-		listado.push_back(**min);
+		nearestRec(arbol.nodo,p,dMin,min,num,anyadidos);
+		listado.push_back(min);
 		//Añadimos el nuevo a la lista de añadidos
-		anyadidos[i]= **min;
+		anyadidos[num]= min;
+		num++;
 	}
 
   return listado;
@@ -437,22 +434,22 @@ bool estaArray (int num,Foton e,Foton anyadidos[]){
 /*
  * Asigna en min el foton mas proximo a un punto.
  */
-void nearestRec(typename kdtree::NodoBinario*& nodo, Punto p,double * dMin,Foton ** min,int num,Foton * anyadidos){
+void nearestRec(typename kdtree::NodoBinario*& nodo, Punto p,double& dMin,Foton& min,int num,Foton anyadidos[]){
 	if(nodo != nullptr){
 		Foton actual=nodo->dato;
-		Punto act = actual.getPosicion();
-		double dNueva =0.0;
+		Punto act = min.getPosicion();
 		double d=sqrt(pow((act.getX()-p.getX()),2.0) + pow((act.getY()-p.getY()),2.0) + pow((act.getZ()-p.getZ()),2.0));
-
-		if(d<*dMin){
+		if(d<dMin){
 			if(!estaArray(num,actual,anyadidos)){
-				*min = &actual;
-				*dMin = d;
-			}
+				nearestRec(nodo->dcho,p,d,actual,num,anyadidos);
+				nearestRec(nodo->izq,p,d,actual,num,anyadidos);
+			}	
 		}
-		nearestRec(nodo->dcho,p,dMin,min,num,anyadidos);
-		nearestRec(nodo->izq,p,dMin,min,num,anyadidos);
-	}
+		else{
+			nearestRec(nodo->dcho,p,dMin,min,num,anyadidos);
+			nearestRec(nodo->izq,p,dMin,min,num,anyadidos);
+		}
+	}	
 }
 
 #endif
