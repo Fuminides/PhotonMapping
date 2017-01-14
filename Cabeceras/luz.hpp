@@ -47,7 +47,7 @@ public:
 	bool getArea(){ return area; }
 	void esArea() { area = true; }
 
-	std::vector<Rayo> muestrearFotones(int);
+	std::vector<Rayo> muestrearFotones();
 
 };
 

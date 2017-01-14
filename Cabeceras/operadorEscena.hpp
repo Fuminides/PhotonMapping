@@ -41,7 +41,7 @@ private:
     //Coeficientes de ajuste (Usados para debug)
     const double AMBIENTE = 1.0;
     const double REFRACCION_MEDIO = 1;
-    const double K_LUZ_DIR = 1;
+    const double K_LUZ_DIR = 1.0;
 
     //Caminos especulares
     const int NUMERO_REBOTES  = 4;
@@ -51,8 +51,9 @@ private:
     const double K_LUZ_INDIR = 1.0 / (NUMERO_RAYOS_INDIRECTA + 0.000000000001);
 
     //Numero de fotones por mapa
-    const int FOTONES = 5000;
-    const int FOTONES_CAUSTICA = 1000;
+    const int FOTONES = 1000;
+    const int FOTONES_CAUSTICA = 3000;
+    const int PROXIMOS = 50;
 
     
     Camara camara;
@@ -84,7 +85,7 @@ private:
 
     void lanzarFotones();
 
-    double lejano(std::vector<Foton> fotones, Punto p);
+    double lejano(Foton * fotones, Punto p);
 
 public:
 

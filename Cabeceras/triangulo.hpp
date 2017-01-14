@@ -54,7 +54,7 @@ class Triangulo : public Figura {
 		//----Luces de area----
 		std::vector<Luz> getLuces();
 		void setLuz(Luz);
-		std::vector<Rayo> muestrearFotones(int n){;}
+		std::vector<Rayo> muestrearFotones(){;}
 };
 
 #endif

@@ -80,7 +80,7 @@ std::vector<Luz> Plano::getLuces(){
     return v;
 }
 
-std::vector<Rayo> Plano::muestrearFotones(int n){
+std::vector<Rayo> Plano::muestrearFotones(){
 	std::vector<Rayo> rayos;
 	Punto p;
 	Punto auxP;
@@ -89,6 +89,7 @@ std::vector<Rayo> Plano::muestrearFotones(int n){
 	std::random_device rd;
     std::mt19937 mt(rd());
     std::uniform_real_distribution<double> dist(-1.0, 1.0);
+    int n = luces[0].getPotencia();
 
 	for (int i = 0; i < n; ++i)
 	{

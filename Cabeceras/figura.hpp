@@ -78,7 +78,7 @@ public:
 	/*
 	 * Devuelve una lista de rayos con los que generar fotones para mapeo de fotones.
 	 */
-	virtual std::vector<Rayo> muestrearFotones(int) = 0;
+	virtual std::vector<Rayo> muestrearFotones() = 0;
 };
 
 #endif

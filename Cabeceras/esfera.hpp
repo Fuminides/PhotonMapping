@@ -78,7 +78,7 @@
          void setLuz(Luz);
 
          //TODO
-         std::vector<Rayo> muestrearFotones(int n){;}
+         std::vector<Rayo> muestrearFotones(){;}
 
  };
 

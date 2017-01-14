@@ -55,7 +55,7 @@ public:
 	//----Luces de Area---
 	void setLuz(Luz);
 	std::vector<Luz> getLuces();
-	std::vector<Rayo> muestrearFotones(int);
+	std::vector<Rayo> muestrearFotones();
 
 };
 

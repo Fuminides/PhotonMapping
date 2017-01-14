@@ -69,7 +69,7 @@ public:
      */
     std::vector<Luz> getLuces();
     void setLuz(Luz);
-    std::vector<Rayo> muestrearFotones(int n) {;}
+    std::vector<Rayo> muestrearFotones() {;}
 
 };
 

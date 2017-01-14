@@ -57,7 +57,7 @@ struct kdtree{
 	/*
 	 * Devuelve los k fotones mas proximos dado un punto.
 	 */
-	inline friend Foton * knearest(kdtree& arbol, Punto p,int k, Foton *);
+	inline friend std::vector<Foton> knearest(kdtree& arbol, Punto p,int k);
    
  public:
 	struct NodoBinario {
@@ -399,8 +399,9 @@ int tamanyo(const kdtree& arbol){
 /*
  * Devuelve los k fotones mas proximos dado un punto.
  */
-Foton * knearest(kdtree& arbol, Punto p,int k, Foton * listado){
-	
+std::vector<Foton> knearest(kdtree& arbol, Punto p,int k){
+	vector<Foton> listado;
+	Foton anyadidos[k];
 	int num=0;
 	Foton * min[1];
 	min[0]=&(arbol.nodo->dato);
@@ -408,16 +409,13 @@ Foton * knearest(kdtree& arbol, Punto p,int k, Foton * listado){
 	//double dMin=sqrt(pow((actual.getX()-p.getX()),2.0) + pow((actual.getY()-p.getY()),2.0) + pow((actual.getZ()-p.getZ()),2.0));
 	//cout<<"La distancia del primero es: "<<dMin<<endl;
 	double dMin = 100000000.0;
+	int i =1;
 	for (int i = 0; i < k; i++){
 		//Iniciamos recorrido del arbol 
-		/*cout<<endl;
-		cout<<"siguiente vuelta "<<i<<endl;
-		cout<<endl;*/
-		dMin = 100000000.0;
-		nearestRec(arbol.nodo,p, &dMin ,min,i,listado);
-		listado[i] = **min;
-		//cout<<"El foton que voy a añadir es X: "<<(**min).getPosicion().getX()<<" Y: "<<(**min).getPosicion().getY()<<" Z: "<<(**min).getPosicion().getZ()<<endl;
+		nearestRec(arbol.nodo,p, &dMin ,min,i,anyadidos);
+		listado.push_back(**min);
 		//Añadimos el nuevo a la lista de añadidos
+		anyadidos[i]= **min;
 	}
 
   return listado;
@@ -426,17 +424,9 @@ Foton * knearest(kdtree& arbol, Punto p,int k, Foton * listado){
  * Devuelve true si el foton e se encuentra en el array anyadidos , false
  * en caso contrario
  */
-bool estaArray (int num,Foton e,Foton * anyadidos){
-	
-	/*for(int x = 0; x<num ; x++){
-		cout<<"El foton que hay en la posicion "<<x<<"es : "<<anyadidos[x].getPosicion().getX()<<" Y: "<<anyadidos[x].getPosicion().getY()<<" Z: "<<anyadidos[x].getPosicion().getZ()<<endl;
-	}	
-	*/
+bool estaArray (int num,Foton e,Foton anyadidos[]){
 	for(int i=0;i<num;i++){
-		//cout<<"con el foton : "<<anyadidos[i].getPosicion().getX()<<" Y: "<<anyadidos[i].getPosicion().getY()<<" Z: "<<anyadidos[i].getPosicion().getZ()<<endl;
-		
-		//El problema esta aqui en este if , ahora coge bien los valores pero igual es la funcion comparar la que da problemas 
-		if(comparar(e,anyadidos[i])==1){
+		if(comparar(anyadidos[i],e)==1){
 			return true;
 		}
 		else{
@@ -453,19 +443,11 @@ void nearestRec(typename kdtree::NodoBinario*& nodo, Punto p,double * dMin,Foton
 		Punto act = actual.getPosicion();
 		double dNueva =0.0;
 		double d=sqrt(pow((act.getX()-p.getX()),2.0) + pow((act.getY()-p.getY()),2.0) + pow((act.getZ()-p.getZ()),2.0));
-		/*cout<<"Posicion Foton actual: "<<actual.getPosicion().getX()<<" Y: "<<actual.getPosicion().getY()<<" Z: "<<actual.getPosicion().getZ()<<endl;
-		cout<<"Posicion Foton menor: "<<(*min)->getPosicion().getX()<<" Y: "<<(*min)->getPosicion().getY()<<" Z: "<<(*min)->getPosicion().getZ()<<endl;
-		cout<<"Comparo la distancia del actual "<<d<<" con la minima que es: "<<(*dMin)<<endl;*/
 
 		if(d<*dMin){
 			if(!estaArray(num,actual,anyadidos)){
 				*min = &actual;
 				*dMin = d;
-				//cout<<"COMO NO ESTA dMin ahora es:  "<<(*dMin)<<endl;
-			}
-			else{
-				*dMin = 10000000.0;
-				//cout<<"SI ESTA "<<endl;
 			}
 		}
 		nearestRec(nodo->dcho,p,dMin,min,num,anyadidos);
