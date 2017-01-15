@@ -51,9 +51,9 @@ private:
     const double K_LUZ_INDIR = 0.0 / (NUMERO_RAYOS_INDIRECTA + 0.000000000001);
 
     //Numero de fotones por mapa
-    const int FOTONES = 1;
-    const int FOTONES_CAUSTICA = 1;
-    const int PROXIMOS = 1;
+    const int FOTONES = 1000;
+    const int FOTONES_CAUSTICA = 3000;
+    const int PROXIMOS = 50;
 
     
     Camara camara;
@@ -92,9 +92,9 @@ public:
 
     //Contrastes
     const bool NORMALIZAR_COLORES = false; //Solo funciona bien en alguna escena muy concreta con muchos fogonazos
-    int NUMERO_RAYOS_INDIRECTA = 102;
+    int NUMERO_RAYOS_INDIRECTA = 0;
     bool PATH_TRACING = false;
-    bool PHOTON_MAPPING = false;
+    bool PHOTON_MAPPING = true;
 
     /**
      * Incluye una camara nueva en la escena

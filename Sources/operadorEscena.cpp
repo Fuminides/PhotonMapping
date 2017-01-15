@@ -683,6 +683,7 @@ void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad, int * nor
 
     if(min > -1){
         //cout << "Ref: " 
+        l.atenuar(min);
         if( (profundidad != PATH_LEN) && (l.getColor().max()*255 > 0) && (choque->getReflejo() == 0)){
            //Guardamos
             Foton foton;
@@ -733,13 +734,14 @@ void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad, int * nor
                 direccion.normalizar();
 
                 Color cAux = choque->getColor();
+                cAux.multiplicar(l.getPotencia());
+
                 if (choque->getBRDF() == 0 )  cAux.multiplicar(phong(choque, pInterseccion, valorPorVector(r.getVector(),-1), direccion)+ AMBIENTE/M_PI);
                 else if (choque->getBRDF() == 1 ) cAux.multiplicar(ward(direccion, valorPorVector(r.getVector(),-1), vNormal,pInterseccion)+ AMBIENTE/M_PI);
 
                 l.setColor(cAux);
                 r.set_values(pInterseccion, direccion);
                 l.setOrigen(r.getOrigen());
-                l.atenuar(min); //?? No se si ponerlo o no
 
                 trazarCaminoFoton(r,l,profundidad-1, normales, causticas, false);
             }
@@ -750,28 +752,27 @@ void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad, int * nor
                 Vector vista = r.getVector();
                 vista.normalizar();
                 normal.normalizar();
-                double n1 = REFRACCION_MEDIO, n2 = choque->getRefraccion();
-
-                if ( productoEscalar(vista, normal) < 0 ){
-                  normal = valorPorVector(normal, -1); //Si no es la normal que queremos, la cambiamos de sentido.  
-                  /*double dAux = n1;
-                  n1=n2;
-                  n2=dAux;*/
-                } 
-                
-                //Aplicamos la ley de snell
-                double cosenoAngulo1 = (productoEscalar(vista, normal) / (normal.modulo() * vista.modulo()));
-                double senoCAngulo2 = pow(n1/n2,2) * (1 - pow(cosenoAngulo1,2));
+                double n2 = REFRACCION_MEDIO, n1 = choque->getRefraccion();
                 Rayo rebote;
-                Punto render;
 
-                refraccion = sumaVectores(valorPorVector(vista, n1/n2), valorPorVector(normal, (n1/n2 * cosenoAngulo1 - sqrt(1-senoCAngulo2))));
+                double cosenoAngulo1 = productoEscalar(vista, normal);
+                if ( cosenoAngulo1 > 0.0) {
+                    normal = valorPorVector(normal, -1); //Si no es la normal que queremos, la cambiamos de sentido.
+                }
+                else{
+                    n1 = REFRACCION_MEDIO;
+                    n2 = choque->getRefraccion();
+                    cosenoAngulo1 = -cosenoAngulo1;
+                }
+
+                //Aplicamos la ley de snell
+                float cosT = 1.0f - pow(n1 / n2, 2.0f) * (1.0f - pow(cosenoAngulo1, 2.0f));
+                cosT = sqrt(cosT);
+                refraccion = sumaVectores(valorPorVector(vista , (n1 / n2) ) , valorPorVector(normal , ((n1 / n2) * cosenoAngulo1 - cosT)));
                 refraccion.normalizar();
-
                 rebote.set_values(pInterseccion, refraccion);
-
-                l.setOrigen(r.getOrigen());
-                l.atenuar(min); //?? No se si ponerlo o no
+                
+                l.setOrigen(pInterseccion);
                 trazarCaminoFoton(rebote, l, profundidad-1, normales, causticas, true);
             }
             //Si no, el rayico a casa que hace frio
