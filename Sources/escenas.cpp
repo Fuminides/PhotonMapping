@@ -174,12 +174,12 @@ int main(int argc, char ** argv){
         planoArriba.setCoefRefraccion(0.0);
 
         origenC.set_values(-43.30, 25, 25);
-        camera.set_values(origenC, vc1, vc2, vc3, boxLenght, boxLenght,  pow(200,2));
+        camera.set_values(origenC, vc1, vc2, vc3, boxLenght, boxLenght,  pow(100,2));
 
         escena.setCamara(camera);
 
         puntoLuz.set_values(boxLenght *3/4,boxLenght-2,boxLenght/2);
-        luz1.set_values(puntoLuz, gris, 50);
+        luz1.set_values(puntoLuz, gris, 25);
 
         esfera.setOrigen(boxLenght/2, 8, boxLenght/4);
         esfera.setColor(gris);

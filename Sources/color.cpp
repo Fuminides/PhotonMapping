@@ -14,6 +14,18 @@ void Color::set_values(int _rojo, int _verde, int _azul, bool n){
 	centinela = true;
 }
 
+void Color::set_values_acum(int _rojo, int _verde, int _azul){
+	red += _rojo*1.0 / (RANGO * 1.0);
+	green += _verde*1.0 / (RANGO * 1.0);
+	blue += _azul*1.0 / (RANGO * 1.0);
+
+	rojo += _rojo;
+	verde += _verde;
+	azul += _azul;
+
+	centinela = true;
+}
+
 unsigned char Color::splashR(){
 	if (!normaliza){
 		if (red*RANGO > 245.5) return 255;
@@ -68,14 +80,14 @@ void Color::multiplicar(double k){
 }
 
 void Color::sumar(Color c){
-	double cred = c.splashR()*1.0 / (RANGO*1.0);
-	double cgreen = c.splashG()*1.0 / (RANGO*1.0);
-	double cblue = c.splashB()*1.0 / (RANGO*1.0);
+	double cred = c.red;
+	double cgreen = c.green;
+	double cblue = c.blue;
 	
 	if (!normaliza){
 		if ( red + cred > 1.0) { red = 1.0; }
 		else if ( red + cred < 0.0 ) { red = 0.0; }
-		else {red += (cred);}
+		else {red += (cred); }
 
 		if ( green + cgreen > 1.0) { green= 1.0; }
 		else if ( green + cgreen < 0.0 ) { green = 0.0; }

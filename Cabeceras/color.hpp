@@ -30,6 +30,8 @@ class Color {
 		 * Especifica el RGB del color, y si se utiliza o no el modo contraste.
 		 */
 		void set_values(int,int,int, bool);
+		void set_values_acum(int,int,int);
+
 
 		bool iniciado() { return centinela; }
 		/*

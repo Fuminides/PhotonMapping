@@ -24,14 +24,24 @@ void operadorEscena::dibujar(){
     Figura * choque;
     crear(fotonMap);
     crear(fotonMapCaustics);
-    if ( PHOTON_MAPPING ){
+    if ( VIRTUAL ){
+        trazar_luces();
+    }
+    else if ( PHOTON_MAPPING ){
         trazar_fotones();
     } 
+
 
     defecto.set_values(0,0,0, NORMALIZAR_COLORES);
     std::list<Rayo> rayos = camara.trazarRayos();
     Color * pixels = (Color * ) malloc(sizeof(Color)*rayos.size());
-    
+    int rep = rayos.size();
+    for ( int i = 0; i < rep; i++){
+        Color color_misterios_de_c_mas_mas;
+        color_misterios_de_c_mas_mas.set_values(0,0,0,NORMALIZAR_COLORES);
+        pixels[i]= color_misterios_de_c_mas_mas;
+    }
+
     int renderizados;
     float progress = 0.0;
     int concurentThreadsSupported = std::thread::hardware_concurrency();
@@ -108,7 +118,7 @@ void operadorEscena::dibujar(){
     FILE *fp;
     fp=fopen("example.ppm", "a");
 
-    int contador = 0, rep = rayos.size();
+    int contador = 0;
 
     for ( int j = 0; j <rep; j = j+1){
         buffer[contador] =  pixels[j].splashR();
@@ -228,7 +238,7 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
 
     min = -1;
 
-    if ( indirecto ){ //Si hay que calcular luz indirecta
+    if ( indirecto && !VIRTUAL){ //Si hay que calcular luz indirecta
         if (PHOTON_MAPPING){
             //Buscar los k mas proximos y dividir por el area
             std::vector<Foton> fotones, causticFoton;
@@ -282,8 +292,8 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
             //R = R / (M_PI*radioCausticas*radioCausticas);
             //G = G / (M_PI*radioCausticas*radioCausticas);
             //B = B / (M_PI*radioCausticas*radioCausticas);
-            //cAux2.set_values(R,G,B, NORMALIZAR_COLORES);
-            //cIndir.sumar(cAux2);
+            cAux2.set_values(R,G,B, NORMALIZAR_COLORES);
+            cIndir.sumar(cAux2);
             //if ( cIndir.max() > 0) cout << cIndir.to_string() << "\n";
  
             inicial.sumar(cIndir);
@@ -620,16 +630,19 @@ int operadorEscena::execute_thread(int id, int intervalo,  int * cuenta, list<Ra
                     puntoRender.set_values(origenRayos.getX() + direccion.getX() * min, origenRayos.getY() + direccion.getY() * min, 
                         origenRayos.getZ() + direccion.getZ() * min);
                      Color colorGen = renderizar(puntoRender, choque, NUMERO_REBOTES, camara.getPosicion(), REFRACCION_MEDIO, true, PATH_LEN);
-                    pixels[z] = colorGen;
+        
+                    pixels[z].sumar(colorGen);
 
                 }
                 else{
                     Color colorAux = choque->getColor();
-                    pixels[z] = (colorAux);
+                    pixels[z].sumar(colorAux);
+                    pixels[z] = colorAux;
                 }
             }
             else{
-                    pixels[z] = (defecto);
+                    pixels[z].sumar(defecto);
+                    pixels[z] = defecto;
             }
 
             cuenta[id] ++;
@@ -660,13 +673,12 @@ void operadorEscena::trazar_fotones(){
             for(Luz luz:luces){
                 double porcentaje = luz.getPotencia() / potenciaTotal;
                 int numeroLuces = porcentaje * (FOTONES+FOTONES_CAUSTICA);
-                cout << porcentaje << "\n";
                 int viejo = restantes+restantesCausticas;
                 while ( restantesCausticas+restantes > viejo - numeroLuces){
                     cout << "Fotones por mapear restantes (Iteracion: "<<iteracion++<<") " <<": Normales ("<<FOTONES<<"): " << -(restantes-FOTONES) << " , Causticas ("<<(FOTONES_CAUSTICA-2)<<"): " << -(restantesCausticas-FOTONES_CAUSTICA) << "\r";
                     if (!luz.getArea()){
                         std::vector<Rayo> rayosLuz = luz.muestrearFotones();
-                        luz.setPotencia(luz.getPotencia() / numeroLuces);
+                        luz.setPotencia(luz.getPotencia()*(FOTONES+FOTONES_CAUSTICA) / (numeroLuces*1.0));
                         for(Rayo rayo : rayosLuz){
                             trazarCaminoFoton(rayo, luz, PATH_LEN, &restantes, &restantesCausticas, false);
                         }
@@ -686,7 +698,7 @@ void operadorEscena::trazar_fotones(){
                     if (figura->isLuz()){
                         std::vector<Rayo> rayosLuz = figura->muestrearFotones();
                         Luz luz = figura->getLuces().at(0);
-                        luz.setPotencia(luz.getPotencia() / numeroLuces);
+                        luz.setPotencia(luz.getPotencia()*(FOTONES+FOTONES_CAUSTICA) / numeroLuces);
                         for(Rayo rayo : rayosLuz){
                             luz.setOrigen(rayo.getOrigen());
                             trazarCaminoFoton(rayo, luz, PATH_LEN, &restantes, &restantesCausticas, false);
@@ -697,6 +709,56 @@ void operadorEscena::trazar_fotones(){
         }
     }
     cout << "\nMapas de fotones creados.\n";
+    cout.flush();
+}
+
+void operadorEscena::trazar_luces(){
+    int restantes = LUCES;
+    int iteracion = 1;
+    double potenciaTotal = 0, potenciaTotalArea = 0;
+    for (Luz luz: luces){
+        if (!luz.getArea() ) potenciaTotal += luz.getPotencia();
+        cout << potenciaTotal;
+    }
+    for (Luz luz: luces){
+        if (luz.getArea() ) potenciaTotalArea += luz.getPotencia()/5.0; //5 es el numero de luces puntuales por luz de area
+    }
+    while (restantes > 0){
+        //Primero sampleamos las luces puntuales
+        if ( potenciaTotal > 0){
+            for(Luz luz:luces){
+                double porcentaje = luz.getPotencia() / potenciaTotal;
+                int numeroLuces = porcentaje * LUCES;
+                int viejo = restantes;
+                while ( restantes > viejo - numeroLuces){
+                    cout << "Luces por crear restantes (Iteracion: "<<iteracion++<<") " <<LUCES << "\r";
+                    if (!luz.getArea()){
+                        std::vector<Rayo> rayosLuz = luz.muestrearFotones();
+                        for(Rayo rayo : rayosLuz){
+                            trazarCaminoLuz(rayo, luz, PATH_LEN, &restantes);
+                        }
+                    }
+                }
+            }
+        }
+        
+        //Luego, las luces de area
+        if ( potenciaTotalArea > 0){
+            for(Figura * figura: figuras){
+                double porcentaje = figura->getLuces().at(0).getPotencia() / potenciaTotalArea;
+                int numeroLuces = porcentaje * LUCES;
+                int viejo = restantes;
+                while ( restantes > viejo - numeroLuces){
+                    cout << "Luces por crear restantes (Iteracion: "<<iteracion++<<") " <<LUCES << "\r";
+                    std::vector<Rayo> rayosLuz = figura->muestrearFotones();
+                    for(Rayo rayo : rayosLuz){
+                        trazarCaminoLuz(rayo, figura->getLuces().at(0), PATH_LEN, &restantes);
+                    }
+                }
+            }
+        }
+    }
+    cout << "\nLuces creadas.\n";
     cout.flush();
 }
 
@@ -801,6 +863,100 @@ void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad, int * nor
                 
                 l.setOrigen(pInterseccion);
                 trazarCaminoFoton(rebote, l, profundidad-1, normales, causticas, true);
+            }
+            //Si no, el rayico a casa que hace frio
+        }
+    }
+}
+
+void operadorEscena::trazarCaminoLuz(Rayo r, Luz l, int profundidad, int * normales){
+    Figura * choque;
+    Montecarlo montecarlo;
+    Punto pInterseccion;
+    Punto origen = r.getOrigen();
+    double min = interseccion(r, &choque);
+
+    if(min > -1){
+        //cout << "Ref: " 
+        l.atenuar(min);
+        if(l.getColor().max()*255 > 0){
+           //Guardamos
+            anyadirLuz(l);
+            *normales--;
+        }
+        //Seguimos el camino
+        if( profundidad > 0){
+            //Ruleta Rusa
+            Vector azar;
+            int umbral = 7, difuso = (int) (umbral*choque->getCoefRefraccion());
+            std::random_device rd;
+            std::mt19937 mt(rd());
+            std::uniform_real_distribution<double> dist(0.0, 1.0);
+            int suerte = ((int) (dist(mt)*10));
+
+            if ( suerte < (umbral - difuso)){ //Rebote
+                Vector azar;
+                Punto aux;
+                aux.set_values(0,0,0);
+                Vector direccion = r.getVector(); 
+
+                pInterseccion.set_values(origen.getX() + direccion.getX()*min,origen.getY()+direccion.getY()*min,origen.getZ()+direccion.getZ()*min);
+          
+                Vector vNormal = choque->normal(pInterseccion);
+                if ( productoEscalar(vNormal, direccion) > 0 ) vNormal = valorPorVector(vNormal,-1);
+                Montecarlo montecarlo;
+
+                montecarlo.set_values(restaPuntos(pInterseccion,aux),vNormal, 1);
+
+                do{
+                    //direccion.set_values(dist(mt),dist(mt),dist(mt));
+                    direccion = montecarlo.calcularw().front(); //Creamos un vector que este en la direccion que queremos.
+                    //cout << "Punto: " << pInterseccion.to_string() << ", Vector: " << direccion.to_string() << ", Normal: " << choque->normal(pInterseccion).to_string() << "\n";
+                } while (productoEscalar(direccion, vNormal) <= 0);
+
+                direccion.normalizar();
+
+                Color cAux = choque->getColor();
+                cAux.multiplicar(l.getPotencia());
+
+                if (choque->getBRDF() == 0 )  cAux.multiplicar(phong(choque, pInterseccion, valorPorVector(r.getVector(),-1), direccion)+ AMBIENTE/M_PI);
+                else if (choque->getBRDF() == 1 ) cAux.multiplicar(ward(direccion, valorPorVector(r.getVector(),-1), vNormal,pInterseccion)+ AMBIENTE/M_PI);
+
+                l.setColor(cAux);
+                r.set_values(pInterseccion, direccion);
+                l.setOrigen(r.getOrigen());
+
+                trazarCaminoLuz(r,l,profundidad-1, normales);
+            }
+            else if ( suerte < umbral){ //refraccion
+                Vector direccion = r.getVector();
+                pInterseccion.set_values(origen.getX() + direccion.getX()*min,origen.getY()+direccion.getY()*min,origen.getZ()+direccion.getZ()*min);
+                Vector normal = choque->normal(pInterseccion), refraccion;
+                Vector vista = r.getVector();
+                vista.normalizar();
+                normal.normalizar();
+                double n2 = REFRACCION_MEDIO, n1 = choque->getRefraccion();
+                Rayo rebote;
+
+                double cosenoAngulo1 = productoEscalar(vista, normal);
+                if ( cosenoAngulo1 > 0.0) {
+                    normal = valorPorVector(normal, -1); //Si no es la normal que queremos, la cambiamos de sentido.
+                }
+                else{
+                    n1 = REFRACCION_MEDIO;
+                    n2 = choque->getRefraccion();
+                    cosenoAngulo1 = -cosenoAngulo1;
+                }
+
+                //Aplicamos la ley de snell
+                float cosT = 1.0f - pow(n1 / n2, 2.0f) * (1.0f - pow(cosenoAngulo1, 2.0f));
+                cosT = sqrt(cosT);
+                refraccion = sumaVectores(valorPorVector(vista , (n1 / n2) ) , valorPorVector(normal , ((n1 / n2) * cosenoAngulo1 - cosT)));
+                refraccion.normalizar();
+                rebote.set_values(pInterseccion, refraccion);
+                
+                l.setOrigen(pInterseccion);
+                trazarCaminoLuz(rebote, l, profundidad-1, normales);
             }
             //Si no, el rayico a casa que hace frio
         }

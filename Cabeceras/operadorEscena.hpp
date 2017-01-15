@@ -51,9 +51,12 @@ private:
     const double K_LUZ_INDIR = 0.0 / (NUMERO_RAYOS_INDIRECTA + 0.000000000001);
 
     //Numero de fotones por mapa
-    const int FOTONES = 100000;
-    const int FOTONES_CAUSTICA = 500;
-    const int PROXIMOS = 25;
+    const int FOTONES = 1000;
+    const int FOTONES_CAUSTICA = 1500;
+    const int PROXIMOS = 50;
+
+    //Numero de luces virtuales
+    const int LUCES = 500;
 
     
     Camara camara;
@@ -83,8 +86,7 @@ private:
     double interseccionLuz(Rayo , Figura ** );
 
     void trazarCaminoFoton(Rayo r, Luz l, int profundidad, int *, int *, bool);
-
-    void lanzarFotones();
+    void trazarCaminoLuz(Rayo, Luz, int, int *);
 
     double lejano(std::vector<Foton> fotones, Punto p);
     double kernelGausiano(Foton, Punto, double);
@@ -96,6 +98,7 @@ public:
     int NUMERO_RAYOS_INDIRECTA = 0;
     bool PATH_TRACING = false;
     bool PHOTON_MAPPING = true;
+    bool VIRTUAL = false;
 
     /**
      * Incluye una camara nueva en la escena
@@ -141,6 +144,11 @@ public:
      * Lanza los fotones en la escena y los guarda en un mapa.
      */
     void trazar_fotones();
+
+    /**
+     * Lanza los fotones en la escena y los guarda en un mapa.
+     */
+    void trazar_luces();
 
 
 };
