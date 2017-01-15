@@ -193,7 +193,7 @@ int main(int argc, char ** argv){
         esfera2.setColor(gris);
         esfera2.setRadio(8);
         esfera2.setReflejo(0.0);
-        esfera2.setRefraccion(1.53);
+        esfera2.setRefraccion(2.0);
         esfera2.setCoefRefraccion(0.7);
         esfera2.setBRDF(0);
 
@@ -290,8 +290,8 @@ int main(int argc, char ** argv){
         esfera2.setColor(negro);
         esfera2.setRadio(8);
         esfera2.setReflejo(0.0);
-        esfera2.setRefraccion(1.53);
-        esfera2.setCoefRefraccion(0.7);
+        esfera2.setRefraccion(1.55);
+        esfera2.setCoefRefraccion(0.5);
         esfera2.setBRDF(0);
 
         origenLuz3.set_values(boxLenght/2, boxLenght -5, boxLenght/2);

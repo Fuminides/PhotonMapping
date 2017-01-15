@@ -231,8 +231,8 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
     if ( indirecto ){ //Si hay que calcular luz indirecta
         if (PHOTON_MAPPING){
             //Buscar los k mas proximos y dividir por el area
-            Foton fotones[PROXIMOS], causticFoton[PROXIMOS];
-            knearest(fotonMap, p, PROXIMOS, fotones); knearest(fotonMapCaustics, p ,PROXIMOS, causticFoton);
+            std::vector<Foton> fotones, causticFoton;
+            fotones = knearest(fotonMap, p, PROXIMOS); causticFoton = knearest(fotonMapCaustics, p ,PROXIMOS);
             double radio = lejano(fotones, p), radioCausticas = lejano(causticFoton, p);
             double R = 0.0, G = 0.0, B = 0.0;
             Color cIndir, cAux2;
@@ -274,14 +274,14 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
                 }
                 cAux.multiplicar(bdrf);
 
-                R+= cAux.splashR();
-                G+= cAux.splashG();
-                B+= cAux.splashB();
+                R+= cAux.splashR()* kernelGausiano(fotonAux, p, radioCausticas);
+                G+= cAux.splashG()* kernelGausiano(fotonAux, p, radioCausticas);
+                B+= cAux.splashB()* kernelGausiano(fotonAux, p, radioCausticas);
             }
 
-            R = R / (M_PI*radioCausticas*radioCausticas);
-            G = G / (M_PI*radioCausticas*radioCausticas);
-            B = B / (M_PI*radioCausticas*radioCausticas);
+            //R = R / (M_PI*radioCausticas*radioCausticas);
+            //G = G / (M_PI*radioCausticas*radioCausticas);
+            //B = B / (M_PI*radioCausticas*radioCausticas);
             cAux2.set_values(R,G,B, NORMALIZAR_COLORES);
             cIndir.sumar(cAux2);
             //if ( cIndir.max() > 0) cout << cIndir.to_string() << "\n";
@@ -719,6 +719,7 @@ void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad, int * nor
                 Vector direccion = r.getVector(); 
 
                 pInterseccion.set_values(origen.getX() + direccion.getX()*min,origen.getY()+direccion.getY()*min,origen.getZ()+direccion.getZ()*min);
+          
                 Vector vNormal = choque->normal(pInterseccion);
                 if ( productoEscalar(vNormal, direccion) > 0 ) vNormal = valorPorVector(vNormal,-1);
                 Montecarlo montecarlo;
@@ -781,7 +782,7 @@ void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad, int * nor
 }
 
 
-double operadorEscena::lejano(Foton * fotones, Punto p){
+double operadorEscena::lejano(std::vector<Foton> fotones, Punto p){
     double resultado = 0.0;
 
     for(int i = 0; i < PROXIMOS; i++){
@@ -795,4 +796,17 @@ double operadorEscena::lejano(Foton * fotones, Punto p){
     }
 
     return resultado;
+}
+
+double operadorEscena::kernelGausiano(Foton foton, Punto p, double maxD){
+    double alfa = 0.918, beta = 1.953;
+    Punto pFoton = foton.getPosicion();
+    Vector vDistancia = restaPuntos(pFoton, p);
+    double distancia = vDistancia.modulo(),
+        exponente = pow(distancia,2)/(2*pow(maxD,2));
+    exponente = -beta * exponente;
+    double numerador = 1 - pow(M_E, exponente);
+    double denominador = 1 - pow(M_E, -beta);
+
+    return alfa * abs(1 - numerador/denominador);
 }

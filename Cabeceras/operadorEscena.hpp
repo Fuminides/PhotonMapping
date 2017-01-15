@@ -51,8 +51,8 @@ private:
     const double K_LUZ_INDIR = 0.0 / (NUMERO_RAYOS_INDIRECTA + 0.000000000001);
 
     //Numero de fotones por mapa
-    const int FOTONES = 1000;
-    const int FOTONES_CAUSTICA = 3000;
+    const int FOTONES = 10000;
+    const int FOTONES_CAUSTICA = 1000;
     const int PROXIMOS = 50;
 
     
@@ -86,7 +86,8 @@ private:
 
     void lanzarFotones();
 
-    double lejano(Foton * fotones, Punto p);
+    double lejano(std::vector<Foton> fotones, Punto p);
+    double kernelGausiano(Foton, Punto, double);
 
 public:
 

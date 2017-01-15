@@ -316,8 +316,6 @@ std::vector<Foton> knearest(kdtree& arbol, Punto p,int k){
 	double dMin = 100000000.0;
 	for (int i = 0; i < k; i++){
 		//Iniciamos recorrido del arbol 
-		cout<<endl;
-		cout<<endl;
 		dMin = 100000000.0;
 		nearestRec(arbol.nodo,p, &dMin ,min,i,anyadidos);
 		listado.push_back(anyadidos[i]);
