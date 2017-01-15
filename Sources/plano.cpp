@@ -81,7 +81,7 @@ std::vector<Luz> Plano::getLuces(){
 }
 
 std::vector<Rayo> Plano::muestrearFotones(){
-	std::vector<Rayo> rayos;
+	std::vector<Rayo> rayos; std::list<Vector> vectores;
 	Punto p;
 	Punto auxP;
 	Rayo r;
@@ -91,27 +91,25 @@ std::vector<Rayo> Plano::muestrearFotones(){
     std::uniform_real_distribution<double> dist(-1.0, 1.0);
     int n = luces[0].getPotencia();
 
-	for (int i = 0; i < n; ++i)
-	{
-		Punto sample, auxP;
-		double height = abs(dist(mt))*altura, weidght = abs(dist(mt))*anchura;
-		Vector aux1 = valorPorVector(vectorY, height), aux2 = valorPorVector(vectorX, weidght);
+    Punto sample;
+	double height = abs(dist(mt))*altura, weidght = abs(dist(mt))*anchura;
+	Vector aux1 = valorPorVector(vectorY, height), aux2 = valorPorVector(vectorX, weidght);
 
-		sample = sumaPuntoVector(origen,aux1);
-		sample = sumaPuntoVector(sample, aux2); //Punto al azar del plano
-		Montecarlo montecarlo;
-
-		Vector dir;
-		auxP.set_values(0,0,0);
-		montecarlo.set_values(restaPuntos(sample, auxP), vNormal, 1);
-		do{
-			dir=montecarlo.calcularw().front(); //Creamos un vector que este enla direccion que queremos.
-		} while (productoEscalar(dir, vNormal) <= 0);
-
-		dir.normalizar();
-		r.set_values(sample, dir);
-
-		rayos.push_back(r);
+	sample = sumaPuntoVector(origen,aux1);
+	sample = sumaPuntoVector(sample, aux2); //Punto al azar del plano
+	Montecarlo montecarlo;
+	//cout << "Sample: " << sample.to_string() << ":\n";
+	Vector dir;
+	int contador = 0;
+	while (contador < n){
+		dir.set_values(dist(mt),dist(mt),dist(mt));
+		double cosenoNormal = productoEscalar(vNormal, dir);
+		if ( dist(mt) > (1 - cosenoNormal) ){
+			r.set_values(sample, dir);
+	//		cout << "	Direccion: " << dir.to_string() << "\n";
+			rayos.push_back(r);
+			contador++;
+		}
 	}
 
 	return rayos;

@@ -174,7 +174,7 @@ int main(int argc, char ** argv){
         planoArriba.setCoefRefraccion(0.0);
 
         origenC.set_values(-43.30, 25, 25);
-        camera.set_values(origenC, vc1, vc2, vc3, boxLenght, boxLenght,  pow(1000,2));
+        camera.set_values(origenC, vc1, vc2, vc3, boxLenght, boxLenght,  pow(200,2));
 
         escena.setCamara(camera);
 
@@ -264,7 +264,7 @@ int main(int argc, char ** argv){
         planoArriba.setRefraccion(0.0);
         planoArriba.setCoefRefraccion(0.0);
 
-        lampara.set_values(origenLampara, nA, vc1, lamparaLen, vc3, lamparaLen);
+        lampara.set_values(origenLampara, nPA, vc1, lamparaLen, vc3, lamparaLen);
         lampara.setReflejo(0.0);
         lampara.setRefraccion(0.0);
         lampara.setCoefRefraccion(0.0);
@@ -274,7 +274,7 @@ int main(int argc, char ** argv){
         lampara.setLuz(luzBox);
 
         origenC.set_values(-43.30, 25, 25);
-        camera.set_values(origenC, vc1, vc2, vc3, boxLenght, boxLenght, pow(500,2));
+        camera.set_values(origenC, vc1, vc2, vc3, boxLenght, boxLenght, pow(100,2));
 
         escena.setCamara(camera);
 
@@ -290,8 +290,8 @@ int main(int argc, char ** argv){
         esfera2.setColor(negro);
         esfera2.setRadio(8);
         esfera2.setReflejo(0.0);
-        esfera2.setRefraccion(1.33);
-        esfera2.setCoefRefraccion(1.0);
+        esfera2.setRefraccion(1.53);
+        esfera2.setCoefRefraccion(0.7);
         esfera2.setBRDF(0);
 
         origenLuz3.set_values(boxLenght/2, boxLenght -5, boxLenght/2);
