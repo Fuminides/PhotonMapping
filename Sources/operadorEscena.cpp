@@ -164,7 +164,7 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
             distancia = figuras[i]->intersectar(puntoDirLuz);
 
             if ( distancia >= 0 ){
-                if ((!figuras[i]->isLuz()) && (distancia < dLuz)){ //Las luces de area no intersectan
+                if ((!figuras[i]->isLuz()) && (distancia < dLuz) && (figuras[i]->getCoefRefraccion()==0.0)){ //Las luces de area no intersectan
                     min = distancia;
                 }
             }
@@ -179,8 +179,7 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
             auxC.multiplicar(AMBIENTE/M_PI); //Mismo termino difuso para ambas BRDF.
             luz.atenuar(restaPuntos(p, luz.getOrigen()).modulo());
 
-            if ( luz.getColor().max() > 0.0001){ //Si no le llega la luz con un minimo de intensidad es como si no le llegara
-
+            if ( luz.getColor().max() > 0.005){ //Si no le llega la luz con un minimo de intensidad es como si no le llegara
                 if ( figura->getBRDF() == 0){
                     bdrf = phong(figura, p, dirLuz,restaPuntos(origenVista,p));   
                 } 
@@ -198,7 +197,6 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
                 double prodAux = productoEscalar(figura->normal(p), R );
                 if ( prodAux < 0 ) prodAux = -prodAux;
                 inicial.multiplicar(prodAux); //Ya normalizado
-
                 //Caminos especulares
                 if ( numeroRebotes > 0){
                     Vector R, dirLuz2 = restaPuntos(p, origenVista);
@@ -217,13 +215,9 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
                     }
 
                     if( figura->getCoefRefraccion() > 0.0){ //No calculamos si no hay refraccion
-                       if ( productoEscalar(figura->normal(p), restaPuntos(p,origenVista)) > 0) {
-                            auxC = refraccionEspecular(figura, p, restaPuntos(p, origenVista), figura->getRefraccion(), refraccionMedio, numeroRebotes);
-                        }
-                        else{
-                            auxC = refraccionEspecular(figura, p, restaPuntos(p, origenVista), refraccionMedio, figura->getRefraccion(), numeroRebotes);
-                        }
-                        auxC.multiplicar (figura->getCoefRefraccion());
+                        cout << luz.getColor().to_string() << " y " << luz.getColor().max()<<"\n";
+                        auxC = refraccionEspecular(figura, p, restaPuntos(p, origenVista), figura->getRefraccion(), refraccionMedio, numeroRebotes);
+                        auxC.multiplicar(figura->getCoefRefraccion());
                         inicial.sumar(auxC);
                     }
                 }
@@ -523,37 +517,47 @@ Color operadorEscena::refraccionEspecular(Figura * figura, Punto origen, Vector 
     Vector normal = figura->normal(origen), refraccion;
     vista.normalizar();
     normal.normalizar();
-    if ( productoEscalar(vista, normal) < 0 ) normal = valorPorVector(normal, -1); //Si no es la normal que queremos, la cambiamos de sentido.
+    double cosenoAngulo1 = (productoEscalar(vista, normal)), distancia;
     
-    //Aplicamos la ley de snell
-    double cosenoAngulo1 = (productoEscalar(vista, normal) / (normal.modulo() * vista.modulo()));
-    double senoCAngulo2 = pow(n1/n2,2) * (1 - pow(cosenoAngulo1,2));
     Rayo rebote;
     Color defecto;
-    int distancia, min = -1;
+     int min = -1;
     Figura * choque;
-
     defecto.set_values(0,0,0, NORMALIZAR_COLORES);
 
-    refraccion = sumaVectores(valorPorVector(vista, n1/n2), valorPorVector(normal, (n1/n2 * cosenoAngulo1 - sqrt(1-senoCAngulo2))));
-    refraccion.normalizar();
+    if ( cosenoAngulo1 > 0.0) {
+        normal = valorPorVector(normal, -1); //Si no es la normal que queremos, la cambiamos de sentido.
+    }
+    else{
+        double nAux = n1;
+        n1 = n2;
+        n2 = nAux;
+        cosenoAngulo1 = -cosenoAngulo1;
+    }
 
-    //Calculamos el nuevo rayo e intersectamos.
+    //Aplicamos la ley de snell
+    float cosT = 1.0f - pow(n1 / n2, 2.0f) * (1.0f - pow(cosenoAngulo1, 2.0f));
+    cosT = sqrt(cosT);
+    refraccion = sumaVectores(valorPorVector(vista , (n1 / n2) ) , valorPorVector(normal , ((n1 / n2) * cosenoAngulo1 - cosT)));
+
     rebote.set_values(origen, refraccion);
+    min =-1;
+
     min = interseccion(rebote, &choque);
+    
 
     if ( min != -1){
         Punto puntoRender;
    
         puntoRender.set_values(origen.getX() + refraccion.getX() * min, origen.getY() + refraccion.getY() * min,
             origen.getZ() + refraccion.getZ() * min);
-   
         return renderizar(puntoRender, choque, numeroRebotes -1, origen, n2, false, 0);
     }
     else{
         return defecto;
     }
 }
+
 
 double operadorEscena::interseccion(Rayo r, Figura ** choque){
     double distancia, min = -1;
@@ -562,8 +566,29 @@ double operadorEscena::interseccion(Rayo r, Figura ** choque){
         distancia = figuras[i]->intersectar(r);
 
         if ( distancia >= 0 ){
+            if ((( min == -1) | (distancia < min))){
+                min = distancia;
+                *choque = figuras[i];
 
-            if (( min == -1) | (distancia < min)){
+                 if (figuras[i]->isBox()){
+                    *choque = ((Box *) (figuras[i]))->store();
+                } 
+            }
+        }
+    }
+
+    return min;
+}
+
+double operadorEscena::interseccionLuz(Rayo r, Figura ** choque){
+    double distancia, min = -1;
+
+    for (int i = 0; i < figuras.size(); i++){
+        distancia = figuras[i]->intersectar(r);
+
+        if ( distancia >= 0 ){
+
+            if ((figuras[i]->getCoefRefraccion()==0.0) && (( min == -1) | (distancia < min))){
                 min = distancia;
                 *choque = figuras[i];
 
@@ -585,7 +610,9 @@ int operadorEscena::execute_thread(int id, int intervalo,  int * cuenta, list<Ra
 
     for (Rayo rayo: rayos){
         if (z==i){
-            double min = interseccion(rayo, &choque);
+            double min = -1;
+
+            min = interseccion(rayo, &choque);
 
             if ( min != -1){
                 if ( !choque->isLuz() ) {

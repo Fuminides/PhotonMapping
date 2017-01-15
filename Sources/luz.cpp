@@ -6,7 +6,7 @@ Color Luz::getColor(){
 
 void Luz::atenuar(double distancia){
 	//Aguanta la potencia metros al cuadrado sin reducirse
-	double ajuste = (potencia * potencia) / (distancia * distancia);
+	double ajuste = potencia / (distancia * distancia);
 	if ( ajuste < 1.0 ) color.multiplicar(ajuste);
 }
 

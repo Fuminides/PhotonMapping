@@ -40,7 +40,7 @@ private:
     
     //Coeficientes de ajuste (Usados para debug)
     const double AMBIENTE = 1.0;
-    const double REFRACCION_MEDIO = 1;
+    const double REFRACCION_MEDIO = 1.0;
     const double K_LUZ_DIR = 1.0;
 
     //Caminos especulares
@@ -48,12 +48,12 @@ private:
     
     //Indirecta
     const int PATH_LEN = 5;
-    const double K_LUZ_INDIR = 1.0 / (NUMERO_RAYOS_INDIRECTA + 0.000000000001);
+    const double K_LUZ_INDIR = 0.0 / (NUMERO_RAYOS_INDIRECTA + 0.000000000001);
 
     //Numero de fotones por mapa
-    const int FOTONES = 1000;
-    const int FOTONES_CAUSTICA = 3000;
-    const int PROXIMOS = 50;
+    const int FOTONES = 1;
+    const int FOTONES_CAUSTICA = 1;
+    const int PROXIMOS = 1;
 
     
     Camara camara;
@@ -80,6 +80,7 @@ private:
      * @choque variable de salida con un puntero a la figura intersectada.
      */
     double interseccion(Rayo r, Figura ** choque);
+    double interseccionLuz(Rayo , Figura ** );
 
     void trazarCaminoFoton(Rayo r, Luz l, int profundidad, int *, int *, bool);
 
@@ -91,9 +92,9 @@ public:
 
     //Contrastes
     const bool NORMALIZAR_COLORES = false; //Solo funciona bien en alguna escena muy concreta con muchos fogonazos
-    int NUMERO_RAYOS_INDIRECTA = 1024;
+    int NUMERO_RAYOS_INDIRECTA = 102;
     bool PATH_TRACING = false;
-    bool PHOTON_MAPPING = true;
+    bool PHOTON_MAPPING = false;
 
     /**
      * Incluye una camara nueva en la escena

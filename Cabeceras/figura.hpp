@@ -26,7 +26,7 @@ protected:
 	//0 -> Phong, 1 -> Ward
 	int brdf = 0;
 	int idFigura;
-	double reflejo, refraccion, kr = 1; //Kr es coeficiente de refraccion del medio de la figura. Valor por defecto = Valor en el aire.
+	double reflejo = 0.0, refraccion = 0.0, kr = 1.0; //Kr es coeficiente de refraccion del medio de la figura. Valor por defecto = Valor en el aire.
 
 public:
 
