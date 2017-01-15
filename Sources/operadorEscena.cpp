@@ -644,28 +644,54 @@ int operadorEscena::execute_thread(int id, int intervalo,  int * cuenta, list<Ra
 }
 
 void operadorEscena::trazar_fotones(){
-    int numLuces = luces.size(), restantes = FOTONES, restantesCausticas = FOTONES_CAUSTICA;
+    int restantes = FOTONES, restantesCausticas = FOTONES_CAUSTICA;
     int iteracion = 1;
+    double potenciaTotal = 0, potenciaTotalArea = 0;
+    for (Luz luz: luces){
+        if (!luz.getArea() ) potenciaTotal += luz.getPotencia();
+        cout << potenciaTotal;
+    }
+    for (Luz luz: luces){
+        if (luz.getArea() ) potenciaTotalArea += luz.getPotencia()/5.0; //5 es el numero de luces puntuales por luz de area
+    }
     while ((restantes > 0) | (restantesCausticas > 1)){
-        cout << "Fotones por mapear restantes (Iteracion: "<<iteracion++<<") " <<": Normales ("<<FOTONES<<"): " << -(restantes-FOTONES) << " , Causticas ("<<(FOTONES_CAUSTICA-2)<<"): " << -(restantesCausticas-FOTONES_CAUSTICA) << "\r";
-        double fotonesPorLuz = (restantes+restantesCausticas)*1.0/(numLuces*1.0);
         //Primero sampleamos las luces puntuales
-        for(Luz luz:luces){
-            if (!luz.getArea()){
-                std::vector<Rayo> rayosLuz = luz.muestrearFotones();
-                for(Rayo rayo : rayosLuz){
-                    trazarCaminoFoton(rayo, luz, PATH_LEN, &restantes, &restantesCausticas, false);
+        if ( potenciaTotal > 0){
+            for(Luz luz:luces){
+                double porcentaje = luz.getPotencia() / potenciaTotal;
+                int numeroLuces = porcentaje * (FOTONES+FOTONES_CAUSTICA);
+                cout << porcentaje << "\n";
+                int viejo = restantes+restantesCausticas;
+                while ( restantesCausticas+restantes > viejo - numeroLuces){
+                    cout << "Fotones por mapear restantes (Iteracion: "<<iteracion++<<") " <<": Normales ("<<FOTONES<<"): " << -(restantes-FOTONES) << " , Causticas ("<<(FOTONES_CAUSTICA-2)<<"): " << -(restantesCausticas-FOTONES_CAUSTICA) << "\r";
+                    if (!luz.getArea()){
+                        std::vector<Rayo> rayosLuz = luz.muestrearFotones();
+                        luz.setPotencia(luz.getPotencia() / numeroLuces);
+                        for(Rayo rayo : rayosLuz){
+                            trazarCaminoFoton(rayo, luz, PATH_LEN, &restantes, &restantesCausticas, false);
+                        }
+                    }
                 }
             }
         }
+        
         //Luego, las luces de area
-        for(Figura * figura: figuras){
-            if (figura->isLuz()){
-                std::vector<Rayo> rayosLuz = figura->muestrearFotones();
-                for(Rayo rayo : rayosLuz){
-                    Luz luz = figura->getLuces().at(0);
-                    luz.setOrigen(rayo.getOrigen());
-                    trazarCaminoFoton(rayo, luz, PATH_LEN, &restantes, &restantesCausticas, false);
+        if ( potenciaTotalArea > 0){
+            for(Figura * figura: figuras){
+                double porcentaje = figura->getLuces().at(0).getPotencia() / potenciaTotalArea;
+                int numeroLuces = porcentaje * (FOTONES+FOTONES_CAUSTICA);
+                int viejo = restantes+restantesCausticas;
+                while ( restantesCausticas+restantes > viejo - numeroLuces){
+                    cout << "Fotones por mapear restantes (Iteracion: "<<iteracion++<<") " <<": Normales ("<<FOTONES<<"): " << -(restantes-FOTONES) << " , Causticas ("<<(FOTONES_CAUSTICA-2)<<"): " << -(restantesCausticas-FOTONES_CAUSTICA) << "\r";
+                    if (figura->isLuz()){
+                        std::vector<Rayo> rayosLuz = figura->muestrearFotones();
+                        Luz luz = figura->getLuces().at(0);
+                        luz.setPotencia(luz.getPotencia() / numeroLuces);
+                        for(Rayo rayo : rayosLuz){
+                            luz.setOrigen(rayo.getOrigen());
+                            trazarCaminoFoton(rayo, luz, PATH_LEN, &restantes, &restantesCausticas, false);
+                        }
+                    }
                 }
             }
         }

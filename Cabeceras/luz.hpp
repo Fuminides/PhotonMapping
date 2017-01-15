@@ -49,6 +49,8 @@ public:
 
 	std::vector<Rayo> muestrearFotones();
 
+	void setPotencia(double d) { potencia = d; }
+
 };
 
 #endif
