@@ -194,7 +194,7 @@ int main(int argc, char ** argv){
         esfera2.setRadio(8);
         esfera2.setReflejo(0.0);
         esfera2.setRefraccion(1.53);
-        esfera2.setCoefRefraccion(1.0);
+        esfera2.setCoefRefraccion(0.7);
         esfera2.setBRDF(0);
 
         origenLuz3.set_values(boxLenght * 1/5, boxLenght/2, boxLenght/2);

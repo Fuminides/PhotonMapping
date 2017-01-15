@@ -164,7 +164,7 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
             distancia = figuras[i]->intersectar(puntoDirLuz);
 
             if ( distancia >= 0 ){
-                if ((!figuras[i]->isLuz()) && (distancia < dLuz) && (figuras[i]->getCoefRefraccion()==0.0)){ //Las luces de area no intersectan
+                if ((!figuras[i]->isLuz()) && (distancia < dLuz) && ((figura->getCoefRefraccion() == 0.0) | (figuras[i]->getCoefRefraccion()!=figura->getCoefRefraccion()))){ //Las luces de area no intersectan
                     min = distancia;
                 }
             }
@@ -215,7 +215,6 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
                     }
 
                     if( figura->getCoefRefraccion() > 0.0){ //No calculamos si no hay refraccion
-                        cout << luz.getColor().to_string() << " y " << luz.getColor().max()<<"\n";
                         auxC = refraccionEspecular(figura, p, restaPuntos(p, origenVista), figura->getRefraccion(), refraccionMedio, numeroRebotes);
                         auxC.multiplicar(figura->getCoefRefraccion());
                         inicial.sumar(auxC);
