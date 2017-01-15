@@ -282,8 +282,8 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
             //R = R / (M_PI*radioCausticas*radioCausticas);
             //G = G / (M_PI*radioCausticas*radioCausticas);
             //B = B / (M_PI*radioCausticas*radioCausticas);
-            cAux2.set_values(R,G,B, NORMALIZAR_COLORES);
-            cIndir.sumar(cAux2);
+            //cAux2.set_values(R,G,B, NORMALIZAR_COLORES);
+            //cIndir.sumar(cAux2);
             //if ( cIndir.max() > 0) cout << cIndir.to_string() << "\n";
  
             inicial.sumar(cIndir);
