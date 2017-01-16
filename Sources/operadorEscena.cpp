@@ -211,7 +211,6 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
 
             if ( libre ){ //Si no hemos encontrado nada que tape la luz
                 Color auxC = figura->getColor(), lcAux = luz.getColor(); 
-                lcAux.multiplicar(1/lcAux.max());
                 auxC.set_values(auxC.splashR()*(lcAux.splashR()/255),auxC.splashG()*(lcAux.splashG()/255),auxC.splashB()*(lcAux.splashB()/255), NORMALIZAR_COLORES);
                 auxC.multiplicar(AMBIENTE/M_PI); //Mismo termino difuso para ambas BRDF.
                 luz.atenuar(restaPuntos(p, luz.getOrigen()).modulo());
@@ -871,7 +870,7 @@ void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad, int * nor
                 Rayo rebote;
 
                 double cosenoAngulo1 = productoEscalar(vista, normal);
-                if ( cosenoAngulo1 > 0.0) {
+                if ( cosenoAngulo1 < 0.0) {
                     normal = valorPorVector(normal, -1); //Si no es la normal que queremos, la cambiamos de sentido.
                 }
                 else{
@@ -889,7 +888,7 @@ void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad, int * nor
                 
                 l.setOrigen(pInterseccion);
                 Color cAux = l.getColor();
-                //cAux.multiplicar(choque->getCoefRefraccion());
+                cAux.multiplicar(choque->getCoefRefraccion() * 0.2);
                 l.setColor(cAux);
                 trazarCaminoFoton(rebote, l, profundidad-1, normales, causticas, true);
             }

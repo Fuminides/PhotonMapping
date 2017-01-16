@@ -174,7 +174,7 @@ int main(int argc, char ** argv){
         planoArriba.setCoefRefraccion(0.0);
 
         origenC.set_values(-43.30, 25, 25);
-        camera.set_values(origenC, vc1, vc2, vc3, boxLenght, boxLenght,  pow(100,2));
+        camera.set_values(origenC, vc1, vc2, vc3, boxLenght, boxLenght,  pow(300,2));
 
         escena.setCamara(camera);
 
@@ -198,7 +198,7 @@ int main(int argc, char ** argv){
         esfera2.setBRDF(0);
 
         origenLuz3.set_values(boxLenght * 2/5, boxLenght-5, boxLenght /2);
-        luz3.set_values(origenLuz3, blanco, 20);
+        luz3.set_values(origenLuz3, blanco, 25);
 
         escena.anyadirLuz(luz3);
         escena.anyadirFigura(&esfera);

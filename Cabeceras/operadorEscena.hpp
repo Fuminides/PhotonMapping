@@ -52,7 +52,7 @@ private:
 
     //Numero de fotones por mapa
     const int FOTONES = 1000;
-    const int FOTONES_CAUSTICA = 1500;
+    const int FOTONES_CAUSTICA = 1000;
     const int PROXIMOS = 50;
 
     //Numero de luces virtuales
