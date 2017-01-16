@@ -31,6 +31,9 @@ void operadorEscena::dibujar(){
         trazar_fotones();
     } 
 
+    int num_luces = luces.size();
+    int numero_pixels_totales = 1;
+    if ( VIRTUAL ) numero_pixels_totales*=num_luces;
 
     defecto.set_values(0,0,0, NORMALIZAR_COLORES);
     std::list<Rayo> rayos = camara.trazarRayos();
@@ -52,10 +55,24 @@ void operadorEscena::dibujar(){
 
     std::vector<future<int>> futures;
     futures.reserve(concurentThreadsSupported);
-
-    for(int z = 0; z < concurentThreadsSupported; z++){
-        futures.push_back(async(std::launch::async, &operadorEscena::execute_thread, this, z, concurentThreadsSupported, &(i[0]), rayos, pixels));
+    if (VIRTUAL){
+        for (luzEsperada = 0; luzEsperada < num_luces; luzEsperada++){
+            for(int z = 0; z < concurentThreadsSupported; z++){
+                futures.push_back(async(std::launch::async, &operadorEscena::execute_thread, this, z, concurentThreadsSupported, &(i[0]), rayos, pixels));
+            }
+            for (int cuenta = 0; cuenta < concurentThreadsSupported; ++cuenta)
+            {
+                futures[cuenta].wait();
+            }
+            cout << "Escena " << luzEsperada << " renderizada de " << num_luces << "\r";
+        }
     }
+    else{
+        for(int z = 0; z < concurentThreadsSupported; z++){
+            futures.push_back(async(std::launch::async, &operadorEscena::execute_thread, this, z, concurentThreadsSupported, &(i[0]), rayos, pixels));
+        }
+    }
+
 
     renderizados = 0;
     for(int count = 0; count < concurentThreadsSupported; count++){
@@ -121,9 +138,14 @@ void operadorEscena::dibujar(){
     int contador = 0;
 
     for ( int j = 0; j <rep; j = j+1){
+         if ( VIRTUAL ){
+            pixels[j].multiplicar(1/(num_luces*1.0));
+        }
         buffer[contador] =  pixels[j].splashR();
         buffer[contador+1] = pixels[j].splashG();
         buffer[contador+2] =  pixels[j].splashB();
+
+       
         contador+=3;
         if ( contador == 8088 ){
             fwrite(buffer, sizeof(unsigned char), contador, fp);
@@ -157,86 +179,90 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
     double kd = AMBIENTE; 
     Vector dirLuz;
     double bdrf;
-    int min;
-
+    int min, cuentaLuz = 0;
+    //if (luzEsperada != 0 )cout << luzEsperada;
     for ( Luz luz: luces){
-        libre = true;
-        Vector dirLuz = restaPuntos(luz.getOrigen(), p);
-        Rayo puntoDirLuz;
-        double dLuz = dirLuz.modulo();
-        dirLuz.normalizar();
-        puntoDirLuz.set_values(p, dirLuz);
-        Figura * choque;
+        //Luz directa
+        //cout << "Esperada " << luzEsperada << " y la cuenta es " << cuentaLuz << "\n";
+        if ((!VIRTUAL) | (VIRTUAL && (luzEsperada == cuentaLuz))){
+            libre = true;
+            Vector dirLuz = restaPuntos(luz.getOrigen(), p);
+            Rayo puntoDirLuz;
+            double dLuz = dirLuz.modulo();
+            dirLuz.normalizar();
+            puntoDirLuz.set_values(p, dirLuz);
+            Figura * choque;
 
-        min = -1;
+            min = -1;
 
-        for (int i = 0; i < figuras.size(); i++){
-            distancia = figuras[i]->intersectar(puntoDirLuz);
+            for (int i = 0; i < figuras.size(); i++){
+                distancia = figuras[i]->intersectar(puntoDirLuz);
 
-            if ( distancia >= 0 ){
-                if ((!figuras[i]->isLuz()) && (distancia < dLuz) && ((figura->getCoefRefraccion() == 0.0) | (figuras[i]->getCoefRefraccion()!=figura->getCoefRefraccion()))){ //Las luces de area no intersectan
-                    min = distancia;
+                if ( distancia >= 0 ){
+                    if ((!figuras[i]->isLuz()) && (distancia < dLuz) && ((figura->getCoefRefraccion() == 0.0) | (figuras[i]->getCoefRefraccion()!=figura->getCoefRefraccion()))){ //Las luces de area no intersectan
+                        min = distancia;
+                    }
+                }
+            }
+
+            if ( min > -1 ){
+                libre = false;
+            }
+
+            if ( libre ){ //Si no hemos encontrado nada que tape la luz
+                Color auxC = figura->getColor(); 
+                auxC.multiplicar(AMBIENTE/M_PI); //Mismo termino difuso para ambas BRDF.
+                luz.atenuar(restaPuntos(p, luz.getOrigen()).modulo());
+
+                if ( luz.getColor().max() > 0.005){ //Si no le llega la luz con un minimo de intensidad es como si no le llegara
+                    if ( figura->getBRDF() == 0){
+                        bdrf = phong(figura, p, dirLuz,restaPuntos(origenVista,p));   
+                    } 
+                    else if (figura->getBRDF() == 1){
+                        bdrf = ward(restaPuntos(origenVista,p), dirLuz, figura->normal(p), p);
+                    }
+
+                    Color auxColor = luz.getColor();
+                    auxColor.multiplicar(bdrf);
+
+                    //Sumamos el especular y el difuso (no hay ambiente)
+                    inicial.sumar(auxColor);
+                    inicial.sumar(auxC);
+                    Vector R = restaVectores(valorPorVector(figura->normal(p), 2 * productoEscalar(dirLuz, figura->normal(p))), dirLuz); //Ya normalizado
+                    double prodAux = productoEscalar(figura->normal(p), R );
+                    if ( prodAux < 0 ) prodAux = -prodAux;
+                    inicial.multiplicar(prodAux); //Ya normalizado
+                    //Caminos especulares
+                    if ( numeroRebotes > 0){
+                        Vector R, dirLuz2 = restaPuntos(p, origenVista);
+                        dirLuz2.normalizar();
+
+                        if ( figura->getReflejo() > 0.0){ //No calculamos si no hay reflejo
+                            Vector nAux = figura->normal(p);
+
+                            if ( productoEscalar(restaPuntos(origenVista,p), nAux) < 0 ) nAux = valorPorVector(nAux, -1);
+
+                            R = restaVectores(dirLuz2, valorPorVector(valorPorVector(nAux, productoEscalar(dirLuz2,nAux)), 2));
+                            R.normalizar();
+                            Color auxC = reboteEspecular(figura, p, R, numeroRebotes);
+                            auxC.multiplicar(figura->getReflejo());
+                            inicial.sumar(auxC);
+                        }
+
+                        if( figura->getCoefRefraccion() > 0.0){ //No calculamos si no hay refraccion
+                            auxC = refraccionEspecular(figura, p, restaPuntos(p, origenVista), figura->getRefraccion(), refraccionMedio, numeroRebotes);
+                            auxC.multiplicar(figura->getCoefRefraccion());
+                            inicial.sumar(auxC);
+                        }
+                    }
+
+                    inicial.multiplicar(K_LUZ_DIR); //Solo para debug. (El k es 1)
                 }
             }
         }
+        cuentaLuz++;
 
-        if ( min > -1 ){
-            libre = false;
-        }
-
-        if ( libre ){ //Si no hemos encontrado nada que tape la luz
-            Color auxC = figura->getColor(); 
-            auxC.multiplicar(AMBIENTE/M_PI); //Mismo termino difuso para ambas BRDF.
-            luz.atenuar(restaPuntos(p, luz.getOrigen()).modulo());
-
-            if ( luz.getColor().max() > 0.005){ //Si no le llega la luz con un minimo de intensidad es como si no le llegara
-                if ( figura->getBRDF() == 0){
-                    bdrf = phong(figura, p, dirLuz,restaPuntos(origenVista,p));   
-                } 
-                else if (figura->getBRDF() == 1){
-                    bdrf = ward(restaPuntos(origenVista,p), dirLuz, figura->normal(p), p);
-                }
-
-                Color auxColor = luz.getColor();
-                auxColor.multiplicar(bdrf);
-
-                //Sumamos el especular y el difuso (no hay ambiente)
-                inicial.sumar(auxColor);
-                inicial.sumar(auxC);
-                Vector R = restaVectores(valorPorVector(figura->normal(p), 2 * productoEscalar(dirLuz, figura->normal(p))), dirLuz); //Ya normalizado
-                double prodAux = productoEscalar(figura->normal(p), R );
-                if ( prodAux < 0 ) prodAux = -prodAux;
-                inicial.multiplicar(prodAux); //Ya normalizado
-                //Caminos especulares
-                if ( numeroRebotes > 0){
-                    Vector R, dirLuz2 = restaPuntos(p, origenVista);
-                    dirLuz2.normalizar();
-
-                    if ( figura->getReflejo() > 0.0){ //No calculamos si no hay reflejo
-                        Vector nAux = figura->normal(p);
-
-                        if ( productoEscalar(restaPuntos(origenVista,p), nAux) < 0 ) nAux = valorPorVector(nAux, -1);
-
-                        R = restaVectores(dirLuz2, valorPorVector(valorPorVector(nAux, productoEscalar(dirLuz2,nAux)), 2));
-                        R.normalizar();
-                        Color auxC = reboteEspecular(figura, p, R, numeroRebotes);
-                        auxC.multiplicar(figura->getReflejo());
-                        inicial.sumar(auxC);
-                    }
-
-                    if( figura->getCoefRefraccion() > 0.0){ //No calculamos si no hay refraccion
-                        auxC = refraccionEspecular(figura, p, restaPuntos(p, origenVista), figura->getRefraccion(), refraccionMedio, numeroRebotes);
-                        auxC.multiplicar(figura->getCoefRefraccion());
-                        inicial.sumar(auxC);
-                    }
-                }
-
-                inicial.multiplicar(K_LUZ_DIR); //Solo para debug. (El k es 1)
-            }
-        }
     }
-
-    min = -1;
 
     if ( indirecto && !VIRTUAL){ //Si hay que calcular luz indirecta
         if (PHOTON_MAPPING){
@@ -630,19 +656,17 @@ int operadorEscena::execute_thread(int id, int intervalo,  int * cuenta, list<Ra
                     puntoRender.set_values(origenRayos.getX() + direccion.getX() * min, origenRayos.getY() + direccion.getY() * min, 
                         origenRayos.getZ() + direccion.getZ() * min);
                      Color colorGen = renderizar(puntoRender, choque, NUMERO_REBOTES, camara.getPosicion(), REFRACCION_MEDIO, true, PATH_LEN);
-        
-                    pixels[z].sumar(colorGen);
+                   // if (luzEsperada > 3 && (pixels[z].max() > 1))cout << "Color gen: " << colorGen.to_string() << " pixels[z]: " << pixels[z].to_string() << "\n";
+                    pixels[z].sumar_escenas(colorGen);
 
                 }
                 else{
                     Color colorAux = choque->getColor();
-                    pixels[z].sumar(colorAux);
-                    pixels[z] = colorAux;
+                    pixels[z].sumar_escenas(colorAux);
                 }
             }
             else{
-                    pixels[z].sumar(defecto);
-                    pixels[z] = defecto;
+                    pixels[z].sumar_escenas(defecto);
             }
 
             cuenta[id] ++;
@@ -728,10 +752,10 @@ void operadorEscena::trazar_luces(){
         if ( potenciaTotal > 0){
             for(Luz luz:luces){
                 double porcentaje = luz.getPotencia() / potenciaTotal;
-                int numeroLuces = porcentaje * LUCES;
+                int numeroLuces = LUCES / luces.size();
                 int viejo = restantes;
                 while ( restantes > viejo - numeroLuces){
-                    cout << "Luces por crear restantes (Iteracion: "<<iteracion++<<") " <<LUCES << "\r";
+                    cout << "Luces por crear restantes: " << restantes << "\n";
                     if (!luz.getArea()){
                         std::vector<Rayo> rayosLuz = luz.muestrearFotones();
                         for(Rayo rayo : rayosLuz){
@@ -876,90 +900,43 @@ void operadorEscena::trazarCaminoLuz(Rayo r, Luz l, int profundidad, int * norma
     Punto origen = r.getOrigen();
     double min = interseccion(r, &choque);
 
-    if(min > -1){
-        //cout << "Ref: " 
+    if((min > -1) && (*normales>0)){
         l.atenuar(min);
-        if(l.getColor().max()*255 > 0){
+        Punto aux;
+        aux.set_values(0,0,0);
+        Vector direccion = r.getVector(); 
+
+        pInterseccion.set_values(origen.getX() + direccion.getX()*min,origen.getY()+direccion.getY()*min,origen.getZ()+direccion.getZ()*min);
+  
+       
+        Color cAux = choque->getColor();
+        cAux.multiplicar(l.getPotencia());
+
+        l.setColor(cAux);
+
+        if(l.getColor().max()*255 > 0.01){
            //Guardamos
             anyadirLuz(l);
-            *normales--;
-        }
-        //Seguimos el camino
-        if( profundidad > 0){
-            //Ruleta Rusa
-            Vector azar;
-            int umbral = 7, difuso = (int) (umbral*choque->getCoefRefraccion());
-            std::random_device rd;
-            std::mt19937 mt(rd());
-            std::uniform_real_distribution<double> dist(0.0, 1.0);
-            int suerte = ((int) (dist(mt)*10));
+            *normales= *normales - 1;
 
-            if ( suerte < (umbral - difuso)){ //Rebote
-                Vector azar;
-                Punto aux;
-                aux.set_values(0,0,0);
-                Vector direccion = r.getVector(); 
-
-                pInterseccion.set_values(origen.getX() + direccion.getX()*min,origen.getY()+direccion.getY()*min,origen.getZ()+direccion.getZ()*min);
-          
+            if( profundidad > 0){
                 Vector vNormal = choque->normal(pInterseccion);
                 if ( productoEscalar(vNormal, direccion) > 0 ) vNormal = valorPorVector(vNormal,-1);
                 Montecarlo montecarlo;
-
                 montecarlo.set_values(restaPuntos(pInterseccion,aux),vNormal, 1);
 
                 do{
-                    //direccion.set_values(dist(mt),dist(mt),dist(mt));
                     direccion = montecarlo.calcularw().front(); //Creamos un vector que este en la direccion que queremos.
-                    //cout << "Punto: " << pInterseccion.to_string() << ", Vector: " << direccion.to_string() << ", Normal: " << choque->normal(pInterseccion).to_string() << "\n";
                 } while (productoEscalar(direccion, vNormal) <= 0);
 
                 direccion.normalizar();
-
-                Color cAux = choque->getColor();
-                cAux.multiplicar(l.getPotencia());
-
-                if (choque->getBRDF() == 0 )  cAux.multiplicar(phong(choque, pInterseccion, valorPorVector(r.getVector(),-1), direccion)+ AMBIENTE/M_PI);
-                else if (choque->getBRDF() == 1 ) cAux.multiplicar(ward(direccion, valorPorVector(r.getVector(),-1), vNormal,pInterseccion)+ AMBIENTE/M_PI);
-
-                l.setColor(cAux);
                 r.set_values(pInterseccion, direccion);
                 l.setOrigen(r.getOrigen());
 
                 trazarCaminoLuz(r,l,profundidad-1, normales);
             }
-            else if ( suerte < umbral){ //refraccion
-                Vector direccion = r.getVector();
-                pInterseccion.set_values(origen.getX() + direccion.getX()*min,origen.getY()+direccion.getY()*min,origen.getZ()+direccion.getZ()*min);
-                Vector normal = choque->normal(pInterseccion), refraccion;
-                Vector vista = r.getVector();
-                vista.normalizar();
-                normal.normalizar();
-                double n2 = REFRACCION_MEDIO, n1 = choque->getRefraccion();
-                Rayo rebote;
-
-                double cosenoAngulo1 = productoEscalar(vista, normal);
-                if ( cosenoAngulo1 > 0.0) {
-                    normal = valorPorVector(normal, -1); //Si no es la normal que queremos, la cambiamos de sentido.
-                }
-                else{
-                    n1 = REFRACCION_MEDIO;
-                    n2 = choque->getRefraccion();
-                    cosenoAngulo1 = -cosenoAngulo1;
-                }
-
-                //Aplicamos la ley de snell
-                float cosT = 1.0f - pow(n1 / n2, 2.0f) * (1.0f - pow(cosenoAngulo1, 2.0f));
-                cosT = sqrt(cosT);
-                refraccion = sumaVectores(valorPorVector(vista , (n1 / n2) ) , valorPorVector(normal , ((n1 / n2) * cosenoAngulo1 - cosT)));
-                refraccion.normalizar();
-                rebote.set_values(pInterseccion, refraccion);
-                
-                l.setOrigen(pInterseccion);
-                trazarCaminoLuz(rebote, l, profundidad-1, normales);
-            }
-            //Si no, el rayico a casa que hace frio
         }
+        
     }
 }
 

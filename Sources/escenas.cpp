@@ -198,7 +198,7 @@ int main(int argc, char ** argv){
         esfera2.setBRDF(0);
 
         origenLuz3.set_values(boxLenght * 1/5, boxLenght/2, boxLenght/2);
-        luz3.set_values(origenLuz3, blanco, boxLenght/2);
+        luz3.set_values(origenLuz3, blanco, 30);
 
         escena.anyadirLuz(luz3);
         escena.anyadirFigura(&esfera);

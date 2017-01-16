@@ -54,6 +54,16 @@ unsigned char Color::splashB(){
 	return aux;
 }
 
+long Color::splashRVirtual(){
+	return red*RANGO;
+}
+long Color::splashGVirtual(){
+	return green*RANGO;
+}
+long Color::splashBVirtual(){
+	return blue*RANGO;
+}
+
 void Color::multiplicar(double k){
 	if (!normaliza){
 		if ( red * k > 1.0 ) red = 1.0;
@@ -103,9 +113,30 @@ void Color::sumar(Color c){
 		azul += c.azul;
 	}
 }
+void Color::sumar_escenas(Color c){
+	double cred = c.red;
+	double cgreen = c.green;
+	double cblue = c.blue;
+	
+	if (!normaliza){
+		if ( red + cred < 0.0 ) { red = 0.0; }
+		else {red += (cred); }
+
+		if ( green + cgreen < 0.0 ) { green = 0.0; }
+		else {green += (cgreen);}
+
+		if ( blue + cblue < 0.0 ) { blue = 0.0; }
+		else {blue += (cblue);}
+	}
+	else{
+		rojo += c.rojo;
+		verde += c.verde;
+		azul += c.azul;
+	}
+}
 
 std::string Color::to_string(){
-	if (!normaliza) return "R: " + std::to_string(splashR()) + ", G: " + std::to_string(splashG()) + ", B: " + std::to_string(splashB());
+	if (!normaliza) return "R: " + std::to_string(splashRVirtual()) + ", G: " + std::to_string(splashGVirtual()) + ", B: " + std::to_string(splashBVirtual());
 
 	return "R: " + std::to_string((unsigned char) (((int) rojo) % 255)) + ", G: " + std::to_string((unsigned char) (((int) verde) % 255)) + ", B: " + std::to_string((unsigned char) (((int) azul) % 255))
 	+ ", Originales: R: " + std::to_string(rojo) + ", G: " + std::to_string(verde) + ", B: " + std::to_string(azul);

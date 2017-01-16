@@ -41,12 +41,17 @@ class Color {
 		unsigned char splashG();
 		unsigned char splashB();
 
+		long splashRVirtual();
+		long splashGVirtual();
+		long splashBVirtual();
+
 		/**
 		 * Operaciones con los RGB. En caso de overflow dejan el valor maximo (1.0 * RANGO).
 		 * No truncan en caso de que estemos usando el modo contraste.
 		 */
 		void multiplicar(double k);
 		void sumar(Color); 
+		void sumar_escenas(Color); 
 
 		/*
 		 * Divide todos los canales entre max.

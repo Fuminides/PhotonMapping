@@ -47,7 +47,7 @@ private:
     const int NUMERO_REBOTES  = 4;
     
     //Indirecta
-    const int PATH_LEN = 5;
+    const int PATH_LEN = 4;
     const double K_LUZ_INDIR = 0.0 / (NUMERO_RAYOS_INDIRECTA + 0.000000000001);
 
     //Numero de fotones por mapa
@@ -58,7 +58,8 @@ private:
     //Numero de luces virtuales
     const int LUCES = 500;
 
-    
+    int luzEsperada;
+
     Camara camara;
     std :: vector < Figura * > figuras;
     std :: vector < Luz > luces;
@@ -98,7 +99,7 @@ public:
     int NUMERO_RAYOS_INDIRECTA = 0;
     bool PATH_TRACING = false;
     bool PHOTON_MAPPING = true;
-    bool VIRTUAL = false;
+    bool VIRTUAL = true;
 
     /**
      * Incluye una camara nueva en la escena
