@@ -182,7 +182,7 @@ int main(int argc, char ** argv){
         luz1.set_values(puntoLuz, gris, 25);
 
         esfera.setOrigen(boxLenght/2, 8, boxLenght/4);
-        esfera.setColor(gris);
+        esfera.setColor(negro);
         esfera.setRadio(8);
         esfera.setReflejo(1.0);
         esfera.setRefraccion(0.0);
@@ -190,15 +190,15 @@ int main(int argc, char ** argv){
         esfera.setBRDF(0);
 
         esfera2.setOrigen(boxLenght/3, 8, boxLenght * 0.75);
-        esfera2.setColor(gris);
+        esfera2.setColor(negro);
         esfera2.setRadio(8);
         esfera2.setReflejo(0.0);
-        esfera2.setRefraccion(2.0);
-        esfera2.setCoefRefraccion(0.7);
+        esfera2.setRefraccion(1.95);
+        esfera2.setCoefRefraccion(1.0);
         esfera2.setBRDF(0);
 
-        origenLuz3.set_values(boxLenght * 1/5, boxLenght/2, boxLenght/2);
-        luz3.set_values(origenLuz3, blanco, 30);
+        origenLuz3.set_values(boxLenght * 2/5, boxLenght-5, boxLenght /2);
+        luz3.set_values(origenLuz3, blanco, 20);
 
         escena.anyadirLuz(luz3);
         escena.anyadirFigura(&esfera);
@@ -294,7 +294,8 @@ int main(int argc, char ** argv){
         esfera2.setCoefRefraccion(0.5);
         esfera2.setBRDF(0);
 
-        origenLuz3.set_values(boxLenght/2, boxLenght -5, boxLenght/2);
+       // origenLuz3.set_values(boxLenght/2, boxLenght -5, boxLenght/2);
+        origenLuz3.set_values(boxLenght/2, boxLenght -5, 1);
         luz3.set_values(origenLuz3, blanco, 10);
 
         escena.anyadirFigura(&lampara);

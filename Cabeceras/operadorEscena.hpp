@@ -56,7 +56,7 @@ private:
     const int PROXIMOS = 50;
 
     //Numero de luces virtuales
-    const int LUCES = 500;
+    const int LUCES = 1000;
 
     int luzEsperada;
 
@@ -99,7 +99,7 @@ public:
     int NUMERO_RAYOS_INDIRECTA = 0;
     bool PATH_TRACING = false;
     bool PHOTON_MAPPING = true;
-    bool VIRTUAL = true;
+    bool VIRTUAL = false;
 
     /**
      * Incluye una camara nueva en la escena

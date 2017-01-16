@@ -210,7 +210,9 @@ Color operadorEscena::renderizar(Punto p, Figura * figura, int numeroRebotes, Pu
             }
 
             if ( libre ){ //Si no hemos encontrado nada que tape la luz
-                Color auxC = figura->getColor(); 
+                Color auxC = figura->getColor(), lcAux = luz.getColor(); 
+                lcAux.multiplicar(1/lcAux.max());
+                auxC.set_values(auxC.splashR()*(lcAux.splashR()/255),auxC.splashG()*(lcAux.splashG()/255),auxC.splashB()*(lcAux.splashB()/255), NORMALIZAR_COLORES);
                 auxC.multiplicar(AMBIENTE/M_PI); //Mismo termino difuso para ambas BRDF.
                 luz.atenuar(restaPuntos(p, luz.getOrigen()).modulo());
 
@@ -886,6 +888,9 @@ void operadorEscena::trazarCaminoFoton(Rayo r, Luz l, int profundidad, int * nor
                 rebote.set_values(pInterseccion, refraccion);
                 
                 l.setOrigen(pInterseccion);
+                Color cAux = l.getColor();
+                //cAux.multiplicar(choque->getCoefRefraccion());
+                l.setColor(cAux);
                 trazarCaminoFoton(rebote, l, profundidad-1, normales, causticas, true);
             }
             //Si no, el rayico a casa que hace frio
@@ -899,27 +904,41 @@ void operadorEscena::trazarCaminoLuz(Rayo r, Luz l, int profundidad, int * norma
     Punto pInterseccion;
     Punto origen = r.getOrigen();
     double min = interseccion(r, &choque);
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_real_distribution<double> dist(0.0, 1.0);
+    Color inicial = l.getColor();
 
     if((min > -1) && (*normales>0)){
-        l.atenuar(min);
+        Color cAux = choque->getColor();
+        //cAux.multiplicar(l.getPotencia());
+        l.setColor(cAux);
+        //l.atenuar(min);
         Punto aux;
         aux.set_values(0,0,0);
         Vector direccion = r.getVector(); 
 
         pInterseccion.set_values(origen.getX() + direccion.getX()*min,origen.getY()+direccion.getY()*min,origen.getZ()+direccion.getZ()*min);
-  
        
-        Color cAux = choque->getColor();
-        cAux.multiplicar(l.getPotencia());
+        
 
-        l.setColor(cAux);
-
-        if(l.getColor().max()*255 > 0.01){
+        if(l.getColor().max()*255 > 20){
            //Guardamos
-            anyadirLuz(l);
-            *normales= *normales - 1;
-
-            if( profundidad > 0){
+            if ( (l.getColor().splashB() == l.getColor().splashG()) && (l.getColor().splashG() == l.getColor().splashR()) ){
+                double suerte = dist(mt);
+                if ( suerte > 0.1 ){ anyadirLuz(l); *normales = *normales -1;             cout << l.getColor().to_string() << "\n";}
+            }
+            else{
+                anyadirLuz(l);
+                *normales= *normales - 1;
+                cout << l.getColor().to_string() << "\n";
+            }
+        }
+        if( profundidad > 0){
+            Vector azar;
+            int difuso = (int) (10*choque->getCoefRefraccion());
+            int suerte = ((int) (dist(mt)*10));
+            if ( suerte > difuso){
                 Vector vNormal = choque->normal(pInterseccion);
                 if ( productoEscalar(vNormal, direccion) > 0 ) vNormal = valorPorVector(vNormal,-1);
                 Montecarlo montecarlo;
@@ -935,8 +954,38 @@ void operadorEscena::trazarCaminoLuz(Rayo r, Luz l, int profundidad, int * norma
 
                 trazarCaminoLuz(r,l,profundidad-1, normales);
             }
-        }
-        
+            else{
+                Vector direccion = r.getVector();
+                pInterseccion.set_values(origen.getX() + direccion.getX()*min,origen.getY()+direccion.getY()*min,origen.getZ()+direccion.getZ()*min);
+                Vector normal = choque->normal(pInterseccion), refraccion;
+                Vector vista = r.getVector();
+                vista.normalizar();
+                normal.normalizar();
+                double n2 = REFRACCION_MEDIO, n1 = choque->getRefraccion();
+                Rayo rebote;
+
+                double cosenoAngulo1 = productoEscalar(vista, normal);
+                if ( cosenoAngulo1 > 0.0) {
+                    normal = valorPorVector(normal, -1); //Si no es la normal que queremos, la cambiamos de sentido.
+                }
+                else{
+                    n1 = REFRACCION_MEDIO;
+                    n2 = choque->getRefraccion();
+                    cosenoAngulo1 = -cosenoAngulo1;
+                }
+
+                //Aplicamos la ley de snell
+                float cosT = 1.0f - pow(n1 / n2, 2.0f) * (1.0f - pow(cosenoAngulo1, 2.0f));
+                cosT = sqrt(cosT);
+                refraccion = sumaVectores(valorPorVector(vista , (n1 / n2) ) , valorPorVector(normal , ((n1 / n2) * cosenoAngulo1 - cosT)));
+                refraccion.normalizar();
+                rebote.set_values(pInterseccion, refraccion);
+                l.setOrigen(pInterseccion);
+                l.setColor(inicial);
+
+                trazarCaminoLuz(rebote,l,profundidad-1, normales);
+            }
+        }    
     }
 }
 
